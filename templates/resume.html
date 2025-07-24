@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ name }} - Resume</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+        }
+        h1 {
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+        h2 {
+            color: #3498db;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+            margin-top: 30px;
+        }
+        .title {
+            font-size: 1.2em;
+            color: #7f8c8d;
+            margin-bottom: 15px;
+        }
+        .contact {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .experience-item, .education-item {
+            margin-bottom: 25px;
+        }
+        .company-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 5px;
+        }
+        .company {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .dates {
+            color: #7f8c8d;
+            font-style: italic;
+        }
+        .job-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        ul {
+            margin-top: 5px;
+            padding-left: 20px;
+        }
+        li {
+            margin-bottom: 5px;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>{{ name }}</h1>
+        <div class="title">{{ title }}</div>
+        <div class="contact">
+            {% if contact.email %}
+            <div><a href="mailto:{{ contact.email }}">{{ contact.email }}</a></div>
+            {% endif %}
+
+            {% if contact.phone %}
+            <div>{{ contact.phone }}</div>
+            {% endif %}
+
+            {% if contact.github %}
+            <div><a href="https://github.com/{{ contact.github }}" target="_blank">github.com/{{ contact.github }}</a></div>
+            {% endif %}
+
+            {% if contact.location %}
+            <div>{{ contact.location }}</div>
+            {% endif %}
+        </div>
+    </header>
+
+    <main>
+        <section>
+            <h2>Experience</h2>
+            {% for job in experience %}
+            <div class="experience-item">
+                <div class="company-title">
+                    <span class="company">{{ job.company }}</span>
+                    <span class="dates">{{ job.start }} - {{ job.end if job.end else "Present" }}</span>
+                </div>
+                <div class="job-title">{{ job.title }}</div>
+                <ul>
+                    {% for item in job.description %}
+                    <li>{{ item }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endfor %}
+        </section>
+
+        {% if education %}
+        <section>
+            <h2>Education</h2>
+            {% for edu in education %}
+            <div class="education-item">
+                <div class="company-title">
+                    <span class="company">{{ edu.school }}</span>
+                    <span class="dates">{{ edu.year }}</span>
+                </div>
+                <div class="job-title">{{ edu.degree }}</div>
+            </div>
+            {% endfor %}
+        </section>
+        {% endif %}
+    </main>
+</body>
+</html>
