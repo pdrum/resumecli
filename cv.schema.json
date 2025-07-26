@@ -1,18 +1,46 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
-  "required": ["name", "title", "contact", "experience"],
+  "required": [
+    "name",
+    "title",
+    "contact"
+  ],
   "properties": {
-    "name": { "type": "string" },
-    "title": { "type": "string" },
+    "$schema": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "about": {
+      "type": "string"
+    },
     "contact": {
       "type": "object",
-      "required": ["email", "github"],
+      "required": [
+        "email"
+      ],
       "properties": {
-        "email": { "type": "string", "format": "email" },
-        "phone": { "type": "string" },
-        "github": { "type": "string" },
-        "location": { "type": "string" }
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "github": {
+          "type": "string"
+        },
+        "blog": {
+          "type": "string"
+        },
+        "website": {
+          "type": "string"
+        }
       },
       "additionalProperties": false
     },
@@ -20,15 +48,45 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["company", "title", "start", "description"],
+        "required": [
+          "company",
+          "positions"
+        ],
         "properties": {
-          "company": { "type": "string" },
-          "title": { "type": "string" },
-          "start": { "type": "string" },
-          "end": { "type": ["string", "null"] },
+          "company": {
+            "type": "string"
+          },
           "description": {
+            "type": "string"
+          },
+          "positions": {
             "type": "array",
-            "items": { "type": "string" }
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "title",
+                "startDate"
+              ],
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "startDate": {
+                  "type": "string"
+                },
+                "endDate": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
           }
         },
         "additionalProperties": false
@@ -38,11 +96,23 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["school", "degree", "year"],
+        "required": [
+          "school",
+          "degree"
+        ],
         "properties": {
-          "school": { "type": "string" },
-          "degree": { "type": "string" },
-          "year": { "type": "string" }
+          "school": {
+            "type": "string"
+          },
+          "degree": {
+            "type": "string"
+          },
+          "startDate": {
+            "type": "string"
+          },
+          "endDate": {
+            "type": "string"
+          }
         },
         "additionalProperties": false
       }

@@ -8,7 +8,8 @@ class Template(Enum):
     DEFAULT_RESUME = "resume.html"
 
 class ResumeDataValidationError(Exception):
-    pass
+    def __init__(self, cause: jsonschema.exceptions.ValidationError):
+        super().__init__(f"Invalid resume data format: {cause}")
 
 class ResumeRenderer:
     _template_dir = "templates"
@@ -32,4 +33,4 @@ class ResumeRenderer:
         try:
             jsonschema.validate(instance=resume_data, schema=schema)
         except jsonschema.exceptions.ValidationError as e:
-            raise ResumeDataValidationError("Invalid resume data") from e
+            raise ResumeDataValidationError(e) from e

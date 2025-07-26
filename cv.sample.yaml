@@ -1,0 +1,38 @@
+$schema: ./cv.schema.json
+name: Jane Developer
+title: Full Stack Engineer
+about: Passionate software developer with expertise in web technologies and distributed systems. Committed to writing clean, maintainable code and building user-friendly applications.
+contact:
+  email: jane.dev@example.com
+  phone: +1-555-987-6543
+  github: janedev
+  blog: https://janedev.medium.com
+  website: https://janedev.io
+experience:
+  - company: Tech Innovations Ltd
+    description: Fast-growing startup focused on AI-powered solutions
+    positions:
+      - title: Senior Developer
+        description: Leading the backend team and architecting new features
+        startDate: 2021-04
+        endDate: null
+      - title: Developer
+        description: Implemented RESTful APIs and improved test coverage
+        startDate: 2019-06
+        endDate: 2021-03
+  - company: Digital Solutions Inc
+    description: Enterprise software company specializing in financial services
+    positions:
+      - title: Junior Developer
+        description: Worked on front-end components and bug fixes
+        startDate: 2017-01
+        endDate: 2019-05
+education:
+  - school: University of Technology
+    degree: MSc Computer Science
+    startDate: 2015-09
+    endDate: 2017-06
+  - school: City College
+    degree: BSc Software Engineering
+    startDate: 2011-09
+    endDate: 2015-06

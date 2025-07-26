@@ -77,6 +77,16 @@
         a:hover {
             text-decoration: underline;
         }
+        .position-item {
+            margin-bottom: 20px;
+            padding-left: 15px;
+            border-left: 2px solid #eee;
+        }
+        .company-description {
+            margin-bottom: 15px;
+            font-style: italic;
+            color: #555;
+        }
     </style>
 </head>
 <body>
@@ -105,18 +115,24 @@
     <main>
         <section>
             <h2>Experience</h2>
-            {% for job in experience %}
+            {% for exp in experience %}
             <div class="experience-item">
-                <div class="company-title">
-                    <span class="company">{{ job.company }}</span>
-                    <span class="dates">{{ job.start }} - {{ job.end if job.end else "Present" }}</span>
+                <div class="company">{{ exp.company }}</div>
+                {% if exp.description %}
+                <div class="company-description">{{ exp.description }}</div>
+                {% endif %}
+
+                {% for position in exp.positions %}
+                <div class="position-item">
+                    <div class="company-title">
+                        <span class="job-title">{{ position.title }}</span>
+                        <span class="dates">{{ position.startDate }} - {{ position.endDate if position.endDate else "Present" }}</span>
+                    </div>
+                    {% if position.description %}
+                    <div>{{ position.description }}</div>
+                    {% endif %}
                 </div>
-                <div class="job-title">{{ job.title }}</div>
-                <ul>
-                    {% for item in job.description %}
-                    <li>{{ item }}</li>
-                    {% endfor %}
-                </ul>
+                {% endfor %}
             </div>
             {% endfor %}
         </section>
@@ -128,7 +144,15 @@
             <div class="education-item">
                 <div class="company-title">
                     <span class="company">{{ edu.school }}</span>
-                    <span class="dates">{{ edu.year }}</span>
+                    <span class="dates">
+                        {% if edu.startDate and edu.endDate %}
+                            {{ edu.startDate }} - {{ edu.endDate }}
+                        {% elif edu.startDate %}
+                            {{ edu.startDate }}
+                        {% elif edu.endDate %}
+                            {{ edu.endDate }}
+                        {% endif %}
+                    </span>
                 </div>
                 <div class="job-title">{{ edu.degree }}</div>
             </div>
