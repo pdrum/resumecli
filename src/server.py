@@ -4,7 +4,7 @@ from fastapi import FastAPI, WebSocket
 from fastapi.responses import HTMLResponse
 
 from preview import PreviewService
-from renderer import Template, ResumeRenderer
+from renderer import ResumeRenderer, ResumeTemplate
 
 app = FastAPI()
 
@@ -32,17 +32,26 @@ html = """
 </html>
 """
 
+
 @app.get("/", response_class=HTMLResponse)
-async def get():
+async def get() -> str:
     return html
 
+
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_endpoint(websocket: WebSocket) -> None:
     await websocket.accept()
     while True:
         preview_service = PreviewService(renderer=ResumeRenderer())
+        file_path = os.environ.get(ENV_KEY_RESUME_SOURCE_FILE)
+        if not file_path:
+            raise ValueError(f"Environment variable '{ENV_KEY_RESUME_SOURCE_FILE}' is not set.")
+
+        async def send_update(content: str) -> None:
+            await websocket.send_text(content)
+
         await preview_service.watch_file(
-            file_path=os.environ.get(ENV_KEY_RESUME_SOURCE_FILE), # TODO: handle errors and null
-            on_preview_updated=lambda content: websocket.send_text(content),
-            template=Template.DEFAULT_RESUME
+            file_path=file_path,
+            on_preview_updated=send_update,
+            template=ResumeTemplate.DEFAULT,
         )
