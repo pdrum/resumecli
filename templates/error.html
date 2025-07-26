@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error Occurred</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+        }
+        h1 {
+            margin-bottom: 5px;
+            color: #e74c3c;
+        }
+        .error-container {
+            background-color: #fff;
+            border-left: 4px solid #e74c3c;
+            border-radius: 4px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .error-message {
+            font-family: monospace;
+            white-space: pre-wrap;
+            background-color: #f8f8f8;
+            padding: 15px;
+            border-radius: 4px;
+            overflow: auto;
+            color: #c0392b;
+        }
+        .help-text {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #eaf7ff;
+            border-left: 4px solid #3498db;
+            border-radius: 4px;
+        }
+        .back-button {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 15px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .back-button:hover {
+            background-color: #2980b9;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Error Occurred</h1>
+        <div>Could not render preview from your cv file</div>
+    </header>
+
+    <main>
+        <div class="error-container">
+            <h2>Error Details</h2>
+            <div class="error-message">{{ error_message }}</div>
+        </div>
+
+        <div class="help-text">
+            <h3>What to do now?</h3>
+            <ul>
+                <li>Check that your YAML file follows the correct schema format</li>
+                <li>Verify that all required fields are present</li>
+                <li>Check for any syntax errors in your file</li>
+            </ul>
+        </div>
+    </main>
+</body>
+</html>

@@ -21,10 +21,14 @@ class ResumeRenderer:
             autoescape=select_autoescape(['html', 'xml'])
         )
 
-    def render(self, resume_data, template: Template):
+    def render_resume(self, resume_data, template: Template):
         self._validate_resume_data(resume_data)
         template = self.env.get_template(template.value)
         return template.render(**resume_data)
+
+    def render_error(self, error_message: str):
+        template = self.env.get_template("error.html")
+        return template.render(error_message=error_message)
 
     def _validate_resume_data(self, resume_data):
         with open(self._schema_path, 'r') as schema_file:

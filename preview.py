@@ -4,7 +4,7 @@ from typing import Callable, Awaitable
 import typer
 from watchfiles import awatch
 
-from renderer import ResumeRenderer, Template
+from renderer import ResumeRenderer, Template, ResumeDataValidationError
 
 
 class PreviewService:
@@ -26,10 +26,9 @@ class PreviewService:
             with open(file_path, 'r') as f:
                 resume_data = yaml.safe_load(f)
 
-            rendered_content = self._renderer.render(resume_data, template)
+            rendered_content = self._renderer.render_resume(resume_data, template)
 
             await on_preview_updated(rendered_content)
-            typer.echo("File changed. Preview updated.")
         except Exception as e:
-            typer.echo(type(e).__name__ + ": " + str(e), err=True)
-            typer.echo(f"Error processing file change: {str(e)}", err=True)
+            error_page = self._renderer.render_error(str(e))
+            await on_preview_updated(error_page)
