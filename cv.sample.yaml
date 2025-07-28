@@ -14,7 +14,14 @@ experience:
     description: Fast-growing startup focused on AI-powered solutions
     positions:
       - title: Senior Developer
-        description: Leading the backend team and architecting new features
+        description: |
+          Leading the backend team and architecting new features:
+
+          * Implemented CI/CD pipeline reducing deployment time by 50%
+          * Led team of 5 developers working on microservices architecture
+          * Optimized database queries resulting in 30% performance improvement
+          * Designed and implemented RESTful API used by over 500,000 users
+          * Mentored junior developers through code reviews and pair programming
         startDate: 2021-04
         endDate: null
         skills:
@@ -24,7 +31,13 @@ experience:
           - AWS
           - CI/CD
       - title: Developer
-        description: Implemented RESTful APIs and improved test coverage
+        description: |
+          Full-stack development with focus on backend systems:
+
+          * Developed RESTful APIs with Node.js and Express
+          * Improved test coverage from 60% to 95% using Jest
+          * Implemented real-time notification system using WebSockets
+          * Collaborated with UX designers to improve application usability
         startDate: 2019-06
         endDate: 2021-03
         skills:
@@ -36,7 +49,13 @@ experience:
     description: Enterprise software company specializing in financial services
     positions:
       - title: Junior Developer
-        description: Worked on front-end components and bug fixes
+        description: |
+          Front-end development and maintenance:
+
+          * Built responsive UI components using React and styled-components
+          * Fixed critical bugs in legacy codebase improving stability
+          * Participated in daily Scrum meetings and sprint planning
+          * Assisted in migration from Angular.js to React
         startDate: 2017-01
         endDate: 2019-05
         skills:
