@@ -273,11 +273,13 @@
           <a href="{{ contact.blog }}">{{ contact.blog }}</a>
         </div>
         {% endif %}
-        {% if contact.website %}
+        {% if contact.links %}
+        {% for link in contact.links %}
         <div class="contact-item">
           <i class="fas fa-globe"></i>
-          <a href="{{ contact.website }}">{{ contact.website }}</a>
+          <a href="{{ link }}">{{ link }}</a>
         </div>
+        {% endfor %}
         {% endif %}
       </div>
     </div>
