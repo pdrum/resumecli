@@ -12,7 +12,8 @@ from weasyprint import HTML
 
 
 class ResumeTemplate(Enum):
-    DEFAULT = "resume.html"
+    DEFAULT = "minimal_blue.html"
+    MINIMAL_BLUE = "minimal_blue.html"
 
 
 class ResumeDataValidationError(Exception):

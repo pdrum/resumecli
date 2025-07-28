@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
+      {% block colors %}
       --accent: #1e3a8a;
       --light-accent: #3b82f6;
       --background: #f9fafb;
@@ -16,6 +17,7 @@
       --text: #111827;
       --muted: #6b7280;
       --header-bg: #EEF2FF;
+      {% endblock %}
     }
 
     * {
@@ -243,6 +245,8 @@
         color: black;
       }
     }
+
+    {% block additional_styles %}{% endblock %}
   </style>
 </head>
 <body>
