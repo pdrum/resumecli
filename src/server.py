@@ -28,7 +28,6 @@ html = """
 
                 ws.onclose = function() {
                     console.log('WebSocket connection closed. Attempting to reconnect...');
-                    document.body.innerHTML = 'Connection lost. Reconnecting...';
                     setTimeout(connect, reconnectInterval);
                 };
 
