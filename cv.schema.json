@@ -38,6 +38,9 @@
         "blog": {
           "type": "string"
         },
+        "linkedin": {
+          "type": "string"
+        },
         "links": {
           "type": "array",
           "items": {

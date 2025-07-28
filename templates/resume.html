@@ -273,6 +273,12 @@
           <a href="{{ contact.blog }}">{{ contact.blog }}</a>
         </div>
         {% endif %}
+        {% if contact.linkedin %}
+        <div class="contact-item">
+          <i class="fab fa-linkedin"></i>
+          <a href="{{ contact.linkedin }}">{{ contact.linkedin }}</a>
+        </div>
+        {% endif %}
         {% if contact.links %}
         {% for link in contact.links %}
         <div class="contact-item">
@@ -331,7 +337,7 @@
           <div class="position" style="margin-top: 5px;">
             <div class="position-title">
               <div class="position-title-text"><strong>{{ edu.degree }}</strong></div>
-              <div class="position-date">{{ edu.startDate }} – {{ edu.endDate }}</div>
+              <div class="position-date">{{ edu.startDate }} – {{ edu.endDate or "Present" }}</div>
             </div>
             {% if edu.description %}
             <div class="position-description">{{ edu.description }}</div>
