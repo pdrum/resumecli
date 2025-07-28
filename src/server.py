@@ -3,8 +3,8 @@ import os
 from fastapi import FastAPI, WebSocket
 from fastapi.responses import HTMLResponse
 
-from preview import PreviewService
 from renderer import ResumeRenderer, ResumeTemplate
+from service import ResumeService
 
 app = FastAPI()
 
@@ -42,7 +42,7 @@ async def get() -> str:
 async def websocket_endpoint(websocket: WebSocket) -> None:
     await websocket.accept()
     while True:
-        preview_service = PreviewService(renderer=ResumeRenderer())
+        service = ResumeService(renderer=ResumeRenderer())
         file_path = os.environ.get(ENV_KEY_RESUME_SOURCE_FILE)
         if not file_path:
             raise ValueError(f"Environment variable '{ENV_KEY_RESUME_SOURCE_FILE}' is not set.")
@@ -50,7 +50,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
         async def send_update(content: str) -> None:
             await websocket.send_text(content)
 
-        await preview_service.watch_file(
+        await service.watch_file(
             file_path=file_path,
             on_preview_updated=send_update,
             template=ResumeTemplate.DEFAULT,

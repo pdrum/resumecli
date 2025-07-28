@@ -8,6 +8,7 @@ import jsonschema
 import markdown  # type: ignore[import]
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from markupsafe import Markup
+from weasyprint import HTML
 
 
 class ResumeTemplate(Enum):
@@ -39,6 +40,9 @@ class ResumeRenderer:
     def render_error(self, error_message: str) -> str:
         template = self.env.get_template("error.html")
         return template.render(error_message=error_message, json_schema=self._schema)  # type: ignore[no-any-return]
+
+    def generate_pdf(self, rendered_resume: str) -> bytes:
+        return cast(bytes, HTML(string=rendered_resume).write_pdf())
 
     def _validate_resume_data(self, resume_data: Dict[str, Any]) -> None:
         try:
