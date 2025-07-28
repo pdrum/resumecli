@@ -62,6 +62,24 @@
             background-color: #2980b9;
             text-decoration: none;
         }
+        .schema-container {
+            background-color: #fff;
+            border-left: 4px solid #3498db;
+            border-radius: 4px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .schema-json pre {
+            font-family: monospace;
+            white-space: pre-wrap;
+            background-color: #f8f8f8;
+            padding: 15px;
+            border-radius: 4px;
+            overflow: auto;
+            color: #2980b9;
+            max-height: 400px;
+        }
     </style>
 </head>
 <body>
@@ -84,6 +102,12 @@
                 <li>Check for any syntax errors in your file</li>
             </ul>
         </div>
+        <div class="schema-container">
+            <h2>Schema Reference</h2>
+            <div class="schema-json">
+            <pre>{{ json_schema | tojson(indent=2) }}</pre>
+        </div>
+</div>
     </main>
 </body>
 </html>
