@@ -1,10 +1,10 @@
 import os
 
-from fastapi import FastAPI, WebSocket
+from fastapi import Depends, FastAPI, WebSocket
 from fastapi.responses import HTMLResponse
 
-from renderer import ResumeRenderer, ResumeTemplate
-from service import ResumeService
+from src.renderer import ResumeRenderer, ResumeTemplate
+from src.service import ResumeService
 
 app = FastAPI()
 
@@ -48,16 +48,23 @@ html = """
 """
 
 
+def get_resume_service() -> ResumeService:
+    """Dependency for providing a ResumeService instance."""
+    return ResumeService(renderer=ResumeRenderer())
+
+
 @app.get("/", response_class=HTMLResponse)
 async def get() -> str:
     return html
 
 
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket) -> None:
+async def live_resume_preview_endpoint(
+    websocket: WebSocket,
+    service: ResumeService = Depends(get_resume_service),
+) -> None:
     await websocket.accept()
     while True:
-        service = ResumeService(renderer=ResumeRenderer())
         file_path = os.environ.get(ENV_KEY_RESUME_SOURCE_FILE)
         if not file_path:
             raise ValueError(f"Environment variable '{ENV_KEY_RESUME_SOURCE_FILE}' is not set.")

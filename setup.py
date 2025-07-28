@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import find_packages, setup
 
 with open("requirements.txt") as f:
     requirements = f.read().splitlines()
@@ -6,11 +6,11 @@ with open("requirements.txt") as f:
 setup(
     name="resumecli",
     version="1.0.0",
-    package_dir={"": "src"},
+    packages=find_packages(),
     install_requires=requirements,
     entry_points={
         "console_scripts": [
-            "resumecli=cli:app",
+            "resumecli=src.cli:app",
         ],
     },
 )

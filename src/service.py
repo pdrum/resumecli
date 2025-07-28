@@ -4,7 +4,7 @@ import yaml  # type: ignore[import]
 from typing_extensions import TypeAlias
 from watchfiles import awatch
 
-from renderer import ResumeRenderer, ResumeTemplate
+from src.renderer import ResumeRenderer, ResumeTemplate
 
 PreviewUpdatedCallback: TypeAlias = Callable[[str], Awaitable[None]]
 

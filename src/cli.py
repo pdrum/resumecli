@@ -3,9 +3,9 @@ import os
 import typer
 import uvicorn
 
-import server
-from renderer import ResumeRenderer
-from service import ResumeService
+from src import server
+from src.renderer import ResumeRenderer
+from src.service import ResumeService
 
 app = typer.Typer()
 
@@ -14,7 +14,7 @@ app = typer.Typer()
 def preview(file: str = typer.Argument(..., help="Path to the source YAML file for the resume")) -> None:
     typer.echo(f"Previewing {file}...")
     os.environ[server.ENV_KEY_RESUME_SOURCE_FILE] = os.path.abspath(file)
-    uvicorn.run("server:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("src.server:app", host="127.0.0.1", port=8000, reload=True)
 
 
 @app.command()
