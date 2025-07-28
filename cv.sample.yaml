@@ -16,10 +16,21 @@ experience:
         description: Leading the backend team and architecting new features
         startDate: 2021-04
         endDate: null
+        skills:
+          - Python
+          - Django
+          - Docker
+          - AWS
+          - CI/CD
       - title: Developer
         description: Implemented RESTful APIs and improved test coverage
         startDate: 2019-06
         endDate: 2021-03
+        skills:
+          - JavaScript
+          - Node.js
+          - PostgreSQL
+          - Redis
   - company: Digital Solutions Inc
     description: Enterprise software company specializing in financial services
     positions:
@@ -27,12 +38,26 @@ experience:
         description: Worked on front-end components and bug fixes
         startDate: 2017-01
         endDate: 2019-05
+        skills:
+          - HTML/CSS
+          - JavaScript
+          - React
+          - Git
 education:
   - school: University of Technology
     degree: MSc Computer Science
     startDate: 2015-09
     endDate: 2017-06
+    description: Focused on distributed systems and machine learning
   - school: City College
     degree: BSc Software Engineering
     startDate: 2011-09
     endDate: 2015-06
+    description: Graduated with honors, specializing in web development
+languages:
+  - language: English
+    level: Native
+  - language: Spanish
+    level: Professional working proficiency
+  - language: French
+    level: Elementary proficiency

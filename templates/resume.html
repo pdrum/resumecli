@@ -1,164 +1,358 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ name }} - Resume</title>
-    <style>
-        body {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        header {
-            text-align: center;
-            margin-bottom: 30px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 20px;
-        }
-        h1 {
-            margin-bottom: 5px;
-            color: #2c3e50;
-        }
-        h2 {
-            color: #3498db;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 5px;
-            margin-top: 30px;
-        }
-        .title {
-            font-size: 1.2em;
-            color: #7f8c8d;
-            margin-bottom: 15px;
-        }
-        .contact {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-top: 15px;
-        }
-        .experience-item, .education-item {
-            margin-bottom: 25px;
-        }
-        .company-title {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            margin-bottom: 5px;
-        }
-        .company {
-            font-weight: bold;
-            font-size: 1.1em;
-        }
-        .dates {
-            color: #7f8c8d;
-            font-style: italic;
-        }
-        .job-title {
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: #2c3e50;
-        }
-        ul {
-            margin-top: 5px;
-            padding-left: 20px;
-        }
-        li {
-            margin-bottom: 5px;
-        }
-        a {
-            color: #3498db;
-            text-decoration: none;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
-        .position-item {
-            margin-bottom: 20px;
-            padding-left: 15px;
-            border-left: 2px solid #eee;
-        }
-        .company-description {
-            margin-bottom: 15px;
-            font-style: italic;
-            color: #555;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{{ name }} - Resume</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- Add Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --accent: #1e3a8a;
+      --light-accent: #3b82f6;
+      --background: #f9fafb;
+      --card-bg: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --header-bg: #EEF2FF;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 40px;
+      background: var(--background);
+      color: var(--text);
+    }
+
+    .container {
+      max-width: 850px;
+      margin: auto;
+      background: var(--card-bg);
+      padding: 0;
+      box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .header {
+      text-align: center;
+      padding: 40px;
+      background: var(--header-bg);
+      margin-bottom: 0;
+      border-bottom: 3px solid var(--light-accent);
+    }
+
+    h1 {
+      font-size: 2.5em;
+      margin: 0;
+      color: var(--accent);
+    }
+
+    .title {
+      font-size: 1.3em;
+      color: var(--accent);
+      margin: 10px 0 20px;
+      font-weight: 600;
+    }
+
+    .contact-container {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-top: 25px;
+    }
+
+    .contact-item {
+      display: flex;
+      align-items: center;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.95em;
+    }
+
+    .contact-item i {
+      margin-right: 8px;
+      color: var(--light-accent);
+      font-size: 1.1em;
+    }
+
+    .content {
+      padding: 40px;
+    }
+
+    .about {
+      margin-bottom: 40px;
+      color: var(--muted);
+      font-size: 1.05em;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .section {
+      margin-bottom: 40px;
+    }
+
+    .section h2 {
+      color: var(--accent);
+      font-size: 1.3em;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+    }
+
+    .section h2 i {
+      margin-right: 10px;
+      font-size: 1.1em;
+    }
+
+    .item {
+      margin-bottom: 20px;
+    }
+
+    .item-title {
+      font-weight: 600;
+      font-size: 1.1em;
+    }
+
+    .item-subtitle {
+      color: var(--muted);
+      font-size: 0.95em;
+    }
+
+    .date-range {
+      float: right;
+      color: var(--muted);
+      font-size: 0.9em;
+    }
+
+    .skills {
+      margin-top: 5px;
+      font-size: 0.9em;
+      color: var(--muted);
+    }
+
+    .lang {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    /* Timeline styling for experience section */
+    .timeline-container {
+      position: relative;
+      padding-left: 20px;
+      border-left: 2px solid var(--light-accent);
+      margin-left: 10px;
+    }
+
+    .company {
+      margin-bottom: 25px;
+      position: relative;
+    }
+
+    .company-header {
+      font-weight: bold;
+      font-size: 1.15em;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+
+    .company-description {
+      color: var(--muted);
+      font-size: 0.95em;
+      margin-bottom: 15px;
+    }
+
+    .position {
+      position: relative;
+      margin-bottom: 15px;
+      padding-left: 20px;
+    }
+
+    .position:before {
+      content: "";
+      position: absolute;
+      left: -22px;
+      top: 5px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--light-accent);
+      border: 2px solid white;
+    }
+
+    .position-title {
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .position-title-text {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .position-date {
+      color: var(--muted);
+      font-size: 0.9em;
+      font-weight: normal;
+      white-space: nowrap;
+    }
+
+    .position-description {
+      margin-top: 5px;
+      color: var(--text);
+      font-size: 0.95em;
+    }
+
+    @media (max-width: 600px) {
+      .date-range {
+        float: none;
+        display: block;
+        margin-top: 4px;
+      }
+
+      .lang {
+        flex-direction: column;
+        gap: 4px;
+      }
+    }
+
+    @media print {
+      body {
+        padding: 0;
+        background: white;
+      }
+
+      .container {
+        box-shadow: none;
+        border-radius: 0;
+      }
+
+      a {
+        color: black;
+      }
+    }
+  </style>
 </head>
 <body>
-    <header>
-        <h1>{{ name }}</h1>
-        <div class="title">{{ title }}</div>
-        <div class="contact">
-            {% if contact.email %}
-            <div><a href="mailto:{{ contact.email }}">{{ contact.email }}</a></div>
-            {% endif %}
-
-            {% if contact.phone %}
-            <div>{{ contact.phone }}</div>
-            {% endif %}
-
-            {% if contact.github %}
-            <div><a href="https://github.com/{{ contact.github }}" target="_blank">github.com/{{ contact.github }}</a></div>
-            {% endif %}
-
-            {% if contact.location %}
-            <div>{{ contact.location }}</div>
-            {% endif %}
+  <div class="container">
+    <div class="header">
+      <h1>{{ name }}</h1>
+      <div class="title">{{ title }}</div>
+      <div class="contact-container">
+        <div class="contact-item">
+          <i class="fas fa-envelope"></i>
+          <a href="mailto:{{ contact.email }}">{{ contact.email }}</a>
         </div>
-    </header>
-
-    <main>
-        <section>
-            <h2>Experience</h2>
-            {% for exp in experience %}
-            <div class="experience-item">
-                <div class="company">{{ exp.company }}</div>
-                {% if exp.description %}
-                <div class="company-description">{{ exp.description }}</div>
-                {% endif %}
-
-                {% for position in exp.positions %}
-                <div class="position-item">
-                    <div class="company-title">
-                        <span class="job-title">{{ position.title }}</span>
-                        <span class="dates">{{ position.startDate }} - {{ position.endDate if position.endDate else "Present" }}</span>
-                    </div>
-                    {% if position.description %}
-                    <div>{{ position.description }}</div>
-                    {% endif %}
-                </div>
-                {% endfor %}
-            </div>
-            {% endfor %}
-        </section>
-
-        {% if education %}
-        <section>
-            <h2>Education</h2>
-            {% for edu in education %}
-            <div class="education-item">
-                <div class="company-title">
-                    <span class="company">{{ edu.school }}</span>
-                    <span class="dates">
-                        {% if edu.startDate and edu.endDate %}
-                            {{ edu.startDate }} - {{ edu.endDate }}
-                        {% elif edu.startDate %}
-                            {{ edu.startDate }}
-                        {% elif edu.endDate %}
-                            {{ edu.endDate }}
-                        {% endif %}
-                    </span>
-                </div>
-                <div class="job-title">{{ edu.degree }}</div>
-            </div>
-            {% endfor %}
-        </section>
+        {% if contact.phone %}
+        <div class="contact-item">
+          <i class="fas fa-phone"></i>
+          <span>{{ contact.phone }}</span>
+        </div>
         {% endif %}
-    </main>
+        {% if contact.github %}
+        <div class="contact-item">
+          <i class="fab fa-github"></i>
+          <a href="https://github.com/{{ contact.github }}">github.com/{{ contact.github }}</a>
+        </div>
+        {% endif %}
+        {% if contact.blog %}
+        <div class="contact-item">
+          <i class="fas fa-rss"></i>
+          <a href="{{ contact.blog }}">{{ contact.blog }}</a>
+        </div>
+        {% endif %}
+        {% if contact.website %}
+        <div class="contact-item">
+          <i class="fas fa-globe"></i>
+          <a href="{{ contact.website }}">{{ contact.website }}</a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="content">
+      {% if about %}
+      <div class="about">
+        {{ about }}
+      </div>
+      {% endif %}
+
+      {% if experience %}
+      <div class="section">
+        <h2><i class="fas fa-briefcase"></i> Experience</h2>
+        <div class="timeline-container">
+        {% for job in experience %}
+        <div class="company">
+          <div class="company-header">{{ job.company }}</div>
+          {% if job.description %}
+          <div class="company-description">{{ job.description }}</div>
+          {% endif %}
+          {% for pos in job.positions %}
+          <div class="position">
+            <div class="position-title">
+              <div class="position-title-text">{{ pos.title }}</div>
+              <div class="position-date">{{ pos.startDate }} – {{ pos.endDate or "Present" }}</div>
+            </div>
+            {% if pos.description %}
+            <div class="position-description">{{ pos.description }}</div>
+            {% endif %}
+            {% if pos.skills %}
+            <div class="skills">Skills: {{ pos.skills | join(', ') }}</div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if education %}
+      <div class="section">
+        <h2><i class="fas fa-graduation-cap"></i> Education</h2>
+        <div class="timeline-container">
+        {% for edu in education %}
+        <div class="item" style="position: relative;">
+          <div class="company-header">{{ edu.school }}</div>
+          <div class="position" style="margin-top: 5px;">
+            <div class="position-title">
+              <div class="position-title-text"><strong>{{ edu.degree }}</strong></div>
+              <div class="position-date">{{ edu.startDate }} – {{ edu.endDate }}</div>
+            </div>
+            {% if edu.description %}
+            <div class="position-description">{{ edu.description }}</div>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if languages %}
+      <div class="section">
+        <h2><i class="fas fa-language"></i> Languages</h2>
+        {% for lang in languages %}
+        <div class="lang">
+          <span>{{ lang.language }}</span>
+          <span>{{ lang.level }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
 </body>
 </html>

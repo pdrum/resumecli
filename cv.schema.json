@@ -83,6 +83,12 @@
                     "string",
                     "null"
                   ]
+                },
+                "skills": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
               },
               "additionalProperties": false
@@ -112,10 +118,29 @@
           },
           "endDate": {
             "type": "string"
+          },
+          "description": {
+            "type": "string"
           }
         },
         "additionalProperties": false
       }
+    },
+    "languages": {
+        "type": "array",
+        "items": {
+            "type": "object",
+            "required": ["language", "level"],
+            "properties": {
+            "language": {
+                "type": "string"
+            },
+            "level": {
+                "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
     }
   },
   "additionalProperties": false
