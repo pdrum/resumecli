@@ -1,5 +1,6 @@
 import json
 from enum import Enum
+from pathlib import Path
 from typing import Any, Dict
 
 import jsonschema
@@ -16,8 +17,9 @@ class ResumeDataValidationError(Exception):
 
 
 class ResumeRenderer:
-    _template_dir = "../templates"
-    _schema_path = "../cv.schema.json"
+    PROJECT_ROOT = Path(__file__).resolve().parent.parent
+    _template_dir = PROJECT_ROOT / "templates"
+    _schema_path = PROJECT_ROOT / "cv.schema.json"
 
     def __init__(self) -> None:
         self.env = Environment(
