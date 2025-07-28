@@ -14,15 +14,30 @@ html = """
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Random Number Stream</title>
+        <title>Resume Preview</title>
         <script>
             let ws;
+            let reconnectInterval = 1000; // 1 second reconnection interval
+
             function connect() {
                 ws = new WebSocket(`ws://${location.host}/ws`);
+
                 ws.onmessage = function(event) {
                     document.body.innerHTML = event.data;
                 };
+
+                ws.onclose = function() {
+                    console.log('WebSocket connection closed. Attempting to reconnect...');
+                    document.body.innerHTML = 'Connection lost. Reconnecting...';
+                    setTimeout(connect, reconnectInterval);
+                };
+
+                ws.onerror = function(err) {
+                    console.error('WebSocket error:', err);
+                    ws.close(); // This will trigger onclose event
+                };
             }
+
             window.onload = connect;
         </script>
     </head>
