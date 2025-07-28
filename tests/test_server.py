@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
-from src.server import app, get_resume_service
+from src.server import app, get_resume_service, html
 from src.service import ResumeService
 
 
@@ -63,3 +63,13 @@ async def test_websocket_missing_env_var(mock_resume_service: ResumeService) -> 
             with patch.dict(os.environ, {}, clear=True):
                 with TestClient(app).websocket_connect("/ws") as websocket:
                     websocket.receive_text()
+
+
+@pytest.mark.asyncio
+async def test_get_endpoint_returns_html() -> None:
+    """Test that the GET endpoint returns the expected HTML."""
+    with TestClient(app) as client:
+        response = client.get("/")
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "text/html; charset=utf-8"
+        assert response.text == html
