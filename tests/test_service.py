@@ -2,10 +2,11 @@ import os
 import tempfile
 from unittest.mock import MagicMock, call, patch
 
+import jsonschema.exceptions
 import pytest
 import yaml
 
-from src.renderer import ResumeRenderer, ResumeTemplate
+from src.renderer import ResumeDataValidationError, ResumeRenderer, ResumeTemplate
 from src.service import ResumeService
 
 SAMPLE_RENDERED_RESUME = "<html>Rendered Resume</html>"
@@ -123,3 +124,32 @@ class TestResumeService:
         assert preview_recorder.previews == [SAMPLE_RENDERED_ERROR], "The rendered error page should be sent out."
         mock_renderer.render_resume.assert_not_called()
         mock_renderer.render_error.assert_called_once_with(f"Could not open file: {fake_path}")
+
+    @pytest.mark.asyncio
+    async def test_resume_data_validation_error(self, resume_service, mock_renderer):
+        library_error_message = "Missing required field: 'experience'"
+        resume_data_validation_error = ResumeDataValidationError(
+            jsonschema.exceptions.ValidationError(library_error_message)
+        )
+        mock_renderer.render_resume.side_effect = resume_data_validation_error
+
+        test_data = {"name": "Test User"}
+
+        with tempfile.NamedTemporaryFile(mode="w+", suffix=".yaml") as yaml_file:
+            yaml.dump(test_data, yaml_file)
+
+            file_change_simulator = FileChangeSimulator(file_content_list=[])
+
+            preview_recorder = PreviewRecorder()
+            with patch("src.service.awatch", file_change_simulator.fake_awatch):
+                await resume_service.watch_file(
+                    file_path=yaml_file.name,
+                    on_preview_updated=preview_recorder.on_preview_updated,
+                    template=ResumeTemplate.DEFAULT,
+                )
+
+            assert preview_recorder.previews == [SAMPLE_RENDERED_ERROR], "The rendered error page should be sent out."
+            mock_renderer.render_resume.assert_called_once_with(test_data, ResumeTemplate.DEFAULT)
+            mock_renderer.render_error.assert_called_once_with(
+                f"Failed to validate resume data: {library_error_message}",
+            )

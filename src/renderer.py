@@ -18,7 +18,7 @@ class ResumeTemplate(Enum):
 
 class ResumeDataValidationError(Exception):
     def __init__(self, cause: jsonschema.exceptions.ValidationError):
-        super().__init__(f"Invalid resume data format: {cause}")
+        super().__init__(f"Failed to validate resume data: {cause}")
 
 
 class ResumeRenderer:

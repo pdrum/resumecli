@@ -4,7 +4,7 @@ import yaml  # type: ignore[import]
 from typing_extensions import TypeAlias
 from watchfiles import awatch
 
-from src.renderer import ResumeRenderer, ResumeTemplate
+from src.renderer import ResumeDataValidationError, ResumeRenderer, ResumeTemplate
 
 PreviewUpdatedCallback: TypeAlias = Callable[[str], Awaitable[None]]
 
@@ -54,6 +54,6 @@ class ResumeService:
             rendered_content = self._renderer.render_resume(resume_data, template)
 
             await on_preview_updated(rendered_content)
-        except Exception as e:
+        except ResumeDataValidationError as e:
             error_page = self._renderer.render_error(str(e))
             await on_preview_updated(error_page)
