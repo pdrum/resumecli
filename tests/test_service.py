@@ -75,6 +75,66 @@ class TestResumeService:
             os.unlink(pdf_file_path)
 
     @pytest.mark.asyncio
+    async def test_generate_pdf_file_not_found(self, resume_service, mock_renderer):
+        non_existent_file = "/path/that/does/not/exist.yaml"
+
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as pdf_file:
+            pdf_file_path = pdf_file.name
+
+        try:
+            await resume_service.generate_pdf(
+                cv_data_path=non_existent_file,
+                output_path=pdf_file_path,
+                template=ResumeTemplate.DEFAULT,
+            )
+
+            mock_renderer.render_error.assert_called_with(f"Could not open file: {non_existent_file}")
+            mock_renderer.render_resume.assert_not_called()
+            mock_renderer.generate_pdf.assert_called_with(SAMPLE_RENDERED_ERROR)
+
+            with open(pdf_file_path, "rb") as f:
+                assert f.read() == SAMPLE_PDF_BYTES
+
+        finally:
+            os.unlink(pdf_file_path)
+
+    @pytest.mark.asyncio
+    async def test_generate_pdf_validation_error(self, resume_service, mock_renderer):
+        invalid_data = {"invalid": "data"}
+        library_error_message = "missing field 'name"
+
+        mock_renderer.render_resume.side_effect = ResumeDataValidationError(
+            jsonschema.exceptions.ValidationError(library_error_message)
+        )
+
+        with tempfile.NamedTemporaryFile(mode="w+", suffix=".yaml", delete=False) as yaml_file:
+            yaml.dump(invalid_data, yaml_file)
+            yaml_file_path = yaml_file.name
+
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as pdf_file:
+            pdf_file_path = pdf_file.name
+
+        try:
+            await resume_service.generate_pdf(
+                cv_data_path=yaml_file_path,
+                output_path=pdf_file_path,
+                template=ResumeTemplate.DEFAULT,
+            )
+
+            mock_renderer.render_resume.assert_called_once_with(invalid_data, ResumeTemplate.DEFAULT)
+            mock_renderer.render_error.assert_called_once_with(
+                f"Failed to validate resume data: {library_error_message}",
+            )
+            mock_renderer.generate_pdf.assert_called_once_with(SAMPLE_RENDERED_ERROR)
+
+            with open(pdf_file_path, "rb") as f:
+                assert f.read() == SAMPLE_PDF_BYTES
+
+        finally:
+            os.unlink(yaml_file_path)
+            os.unlink(pdf_file_path)
+
+    @pytest.mark.asyncio
     async def test_watch_file(self, resume_service, mock_renderer):
         initial_data = {"v": 1}
         first_change_data = {"v": 2}
