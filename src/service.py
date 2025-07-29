@@ -46,7 +46,11 @@ class ResumeService:
         try:
             with open(file_path, "r") as f:
                 resume_data = yaml.safe_load(f)
+        except Exception:
+            await on_preview_updated(self._renderer.render_error(f"Could not open file: {file_path}"))
+            return
 
+        try:
             rendered_content = self._renderer.render_resume(resume_data, template)
 
             await on_preview_updated(rendered_content)

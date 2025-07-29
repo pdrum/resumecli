@@ -9,6 +9,7 @@ from src.renderer import ResumeRenderer, ResumeTemplate
 from src.service import ResumeService
 
 SAMPLE_RENDERED_RESUME = "<html>Rendered Resume</html>"
+SAMPLE_RENDERED_ERROR = "<html>Error Page</html>"
 SAMPLE_PDF_BYTES = b"PDF_CONTENT"
 
 
@@ -16,6 +17,7 @@ SAMPLE_PDF_BYTES = b"PDF_CONTENT"
 def mock_renderer():
     renderer = MagicMock(spec=ResumeRenderer)
     renderer.render_resume.return_value = SAMPLE_RENDERED_RESUME
+    renderer.render_error.return_value = SAMPLE_RENDERED_ERROR
     renderer.generate_pdf.return_value = SAMPLE_PDF_BYTES
     return renderer
 
@@ -103,3 +105,21 @@ class TestResumeService:
                     call(second_change_data, ResumeTemplate.DEFAULT),
                 ]
             )
+
+    @pytest.mark.asyncio
+    async def test_rendering_the_error_page_when_file_open_fails(self, resume_service: ResumeService, mock_renderer):
+        preview_recorder = PreviewRecorder()
+
+        file_change_simulator = FileChangeSimulator(file_content_list=[])
+        fake_path = "/a/file/that/is/not/there.yaml"
+
+        with patch("src.service.awatch", file_change_simulator.fake_awatch):
+            await resume_service.watch_file(
+                file_path=fake_path,
+                on_preview_updated=preview_recorder.on_preview_updated,
+                template=ResumeTemplate.DEFAULT,
+            )
+
+        assert preview_recorder.previews == [SAMPLE_RENDERED_ERROR], "The rendered error page should be sent out."
+        mock_renderer.render_resume.assert_not_called()
+        mock_renderer.render_error.assert_called_once_with(f"Could not open file: {fake_path}")
