@@ -48,7 +48,8 @@ class PreviewRecorder:
 
 
 class TestResumeService:
-    def test_generate_pdf(self, resume_service, mock_renderer):
+    @pytest.mark.asyncio
+    async def test_generate_pdf(self, resume_service, mock_renderer):
         test_data = {"v": 1}
 
         with tempfile.NamedTemporaryFile(mode="w+", suffix=".yaml", delete=False) as yaml_file:
@@ -59,8 +60,8 @@ class TestResumeService:
             pdf_file_path = pdf_file.name
 
         try:
-            resume_service.generate_pdf(
-                csv_data_path=yaml_file_path, output_path=pdf_file_path, template=ResumeTemplate.DEFAULT
+            await resume_service.generate_pdf(
+                cv_data_path=yaml_file_path, output_path=pdf_file_path, template=ResumeTemplate.DEFAULT
             )
 
             mock_renderer.render_resume.assert_called_once_with(test_data, ResumeTemplate.DEFAULT)

@@ -13,19 +13,17 @@ class ResumeService:
     def __init__(self, renderer: ResumeRenderer):
         self._renderer = renderer
 
-    def generate_pdf(
+    async def generate_pdf(
         self,
-        csv_data_path: str,
+        cv_data_path: str,
         output_path: str,
         template: ResumeTemplate = ResumeTemplate.DEFAULT,
     ) -> None:
-        with open(csv_data_path, "r") as f:
-            resume_data = yaml.safe_load(f)
+        async def write_to_pdf_file(preview_content: str) -> None:
+            with open(output_path, "wb") as f:
+                f.write(self._renderer.generate_pdf(preview_content))
 
-        rendered_content = self._renderer.render_resume(resume_data, template)
-        pdf = self._renderer.generate_pdf(rendered_content)
-        with open(output_path, "wb") as f:
-            f.write(pdf)
+        await self._update_preview(cv_data_path, write_to_pdf_file, template)
 
     async def watch_file(
         self,

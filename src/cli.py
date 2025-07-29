@@ -1,3 +1,4 @@
+import asyncio
 import os
 
 import typer
@@ -22,10 +23,13 @@ def build(
     file: str = typer.Argument(..., help="Path to the source YAML file for the resume"),
     output: str = typer.Option("output.pdf", help="Output PDF file path"),
 ) -> None:
-    """Build the resume or project."""
-    service = ResumeService(renderer=ResumeRenderer())
-    service.generate_pdf(csv_data_path=file, output_path=output)
-    typer.echo("Building...")
+    typer.echo(f"Building resume from {file}...")
+
+    async def build_resume():
+        service = ResumeService(renderer=ResumeRenderer())
+        await service.generate_pdf(cv_data_path=file, output_path=output)
+
+    asyncio.run(build_resume())
 
 
 @app.command()
