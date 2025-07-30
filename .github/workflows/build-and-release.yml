@@ -1,0 +1,84 @@
+name: Build and Release
+
+on:
+  workflow_dispatch:  # Allow manual triggering only
+  tags:
+    - 'v*'
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install system dependencies
+        run: |
+          brew update
+          brew install pygobject3 gtk+3 libffi gobject-introspection cairo pango gdk-pixbuf
+          echo "DYLD_LIBRARY_PATH=$(brew --prefix)/lib" >> $GITHUB_ENV
+          echo "PKG_CONFIG_PATH=$(brew --prefix)/lib/pkgconfig" >> $GITHUB_ENV
+          echo "XDG_DATA_DIRS=$(brew --prefix)/share" >> $GITHUB_ENV
+          echo "GI_TYPELIB_PATH=$(brew --prefix)/lib/girepository-1.0" >> $GITHUB_ENV
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Build application
+        run: |
+          chmod +x build.sh
+          ./build.sh
+        env:
+          DYLD_LIBRARY_PATH: ${{ env.DYLD_LIBRARY_PATH }}
+          PKG_CONFIG_PATH: ${{ env.PKG_CONFIG_PATH }}
+          XDG_DATA_DIRS: ${{ env.XDG_DATA_DIRS }}
+          GI_TYPELIB_PATH: ${{ env.GI_TYPELIB_PATH }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: resumecli-macos
+          path: dist/resumecli/resumecli
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcairo2-dev libgirepository1.0-dev libpango1.0-dev libgdk-pixbuf2.0-dev libffi-dev
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Build application
+        run: |
+          chmod +x build.sh
+          ./build.sh
+        env:
+          LD_LIBRARY_PATH: "/usr/lib"
+          PKG_CONFIG_PATH: "/usr/lib/pkgconfig"
+          GI_TYPELIB_PATH: "/usr/lib/girepository-1.0"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: resumecli-linux
+          path: dist/resumecli/resumecli
