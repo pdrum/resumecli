@@ -3,11 +3,12 @@
 
 import os
 import sys
+import glob
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 block_cipher = None
 
-# Get the directory of the current working directory instead of __file__
+# Get the directory of the current working directory
 script_dir = os.path.abspath(os.getcwd())
 
 # Collect all necessary data files for weasyprint and other packages
@@ -33,29 +34,54 @@ hidden_imports.extend(collect_submodules('cssselect2'))
 hidden_imports.extend(collect_submodules('tinycss2'))
 hidden_imports.extend(collect_submodules('jinja2'))
 hidden_imports.extend(collect_submodules('jsonschema'))
-hidden_imports.extend(['markdown', 'PIL'])
+hidden_imports.extend([
+    'markdown',
+    'PIL',
+    'gi',
+    'gi.repository.GLib',
+    'gi.repository.GObject',
+    'gi.repository.Gio',
+    'gi.repository.Pango',
+    'gi.repository.PangoCairo',
+    'gi.repository.cairo'
+])
 
 # Define binary dependencies based on the external dependencies script
-# These are libraries that weasyprint depends on
 binaries = []
 if sys.platform == 'darwin':  # macOS
     homebrew_prefix = os.environ.get('HOMEBREW_PREFIX', '/opt/homebrew')
     lib_path = os.path.join(homebrew_prefix, 'lib')
 
-    # Add GObject and related libraries
-    for lib in [
-        'libcairo.2.dylib',
-        'libpango-1.0.0.dylib',
-        'libpangocairo-1.0.0.dylib',
-        'libgobject-2.0.0.dylib',
-        'libglib-2.0.0.dylib',
-        'libintl.8.dylib',
-        'libffi.8.dylib',
-        'libgdk_pixbuf-2.0.0.dylib',
-    ]:
-        lib_file = os.path.join(lib_path, lib)
-        if os.path.exists(lib_file):
-            binaries.append((lib_file, '.'))
+    # Libraries that need to be included
+    lib_patterns = [
+        'libgobject-2.0*.dylib',
+        'libglib-2.0*.dylib',
+        'libcairo*.dylib',
+        'libpango*.dylib',
+        'libharfbuzz*.dylib',
+        'libfontconfig*.dylib',
+        'libfreetype*.dylib',
+        'libpixman*.dylib',
+        'libffi*.dylib',
+        'libgdk_pixbuf*.dylib',
+        'libgio*.dylib',
+        'libgmodule*.dylib',
+        'libgthread*.dylib',
+        'libintl*.dylib',
+        'libiconv*.dylib'
+    ]
+
+    # Add all matching libraries
+    for pattern in lib_patterns:
+        for lib_file in glob.glob(os.path.join(lib_path, pattern)):
+            if os.path.exists(lib_file):
+                binaries.append((lib_file, '.'))
+
+    # Include GI typelib files
+    typelib_path = os.path.join(homebrew_prefix, 'lib', 'girepository-1.0')
+    if os.path.exists(typelib_path):
+        for typelib in glob.glob(os.path.join(typelib_path, '*.typelib')):
+            binaries.append((typelib, 'girepository-1.0'))
 
 a = Analysis(
     ['src/cli.py'],
