@@ -1,6 +1,6 @@
 from typing import Awaitable, Callable
 
-import yaml  # type: ignore[import]
+import yaml
 from typing_extensions import TypeAlias
 from watchfiles import awatch
 

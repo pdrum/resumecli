@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any, Dict, cast
 
 import jsonschema
-import markdown  # type: ignore[import]
+import markdown
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from markupsafe import Markup
 from weasyprint import HTML
@@ -14,6 +14,7 @@ from weasyprint import HTML
 class ResumeTemplate(Enum):
     DEFAULT = "minimal_blue.html"
     MINIMAL_BLUE = "minimal_blue.html"
+    MINIMAL_GREEN = "minimal_green.html"
 
 
 class ResumeDataValidationError(Exception):
@@ -36,11 +37,11 @@ class ResumeRenderer:
         self._validate_resume_data(resume_data)
         resolved_template = self.env.get_template(resume_template.value)
         resume_data_with_processed_markdown = self._markdown_to_html_for_dict(resume_data)
-        return resolved_template.render(**resume_data_with_processed_markdown)  # type: ignore[no-any-return]
+        return resolved_template.render(**resume_data_with_processed_markdown)
 
     def render_error(self, error_message: str) -> str:
         template = self.env.get_template("error.html")
-        return template.render(error_message=error_message, json_schema=self._schema)  # type: ignore[no-any-return]
+        return template.render(error_message=error_message, json_schema=self._schema)
 
     def generate_pdf(self, rendered_resume: str) -> bytes:
         return cast(bytes, HTML(string=rendered_resume).write_pdf())
@@ -57,14 +58,12 @@ class ResumeRenderer:
             return cast(Dict[str, Any], json.load(schema_file))
 
     def _markdown_to_html(self, markdown_text: str) -> Markup:
-        """Convert Markdown text to HTML."""
         html = markdown.markdown(markdown_text.strip(), extensions=["fenced_code", "tables"])
         if html.startswith("<p>") and html.endswith("</p>"):
             html = html[3:-4]
         return Markup(html)
 
     def _markdown_to_html_for_dict(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Recursively convert Markdown strings in a dictionary to HTML."""
         for key, value in data.items():
             data[key] = self._turn_to_html_recursively(value)
         return data
