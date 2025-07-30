@@ -35,7 +35,9 @@ jobs:
         brew install gobject-introspection cairo pango gdk-pixbuf libffi
         echo 'export HOMEBREW_PREFIX="$(brew --prefix)"' >> $GITHUB_ENV
         echo 'export DYLD_FALLBACK_LIBRARY_PATH="$(brew --prefix)/lib"' >> $GITHUB_ENV
-        echo 'export PKG_CONFIG_PATH="$(brew --prefix)/lib/pkgconfig"' >> $GITHUB_ENV
+        echo 'export PKG_CONFIG_PATH="$(brew --prefix libffi)/lib/pkgconfig"' >> $GITHUB_ENV
+        echo 'export LDFLAGS="-L$(brew --prefix libffi)/lib"' >> $GITHUB_ENV
+        echo 'export CPPFLAGS="-I$(brew --prefix libffi)/include"' >> $GITHUB_ENV
 
     - name: Install dependencies
       run: |
