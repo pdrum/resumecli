@@ -1,7 +1,9 @@
+import asyncio
 import os
 
 from fastapi import Depends, FastAPI, WebSocket
 from fastapi.responses import HTMLResponse
+from starlette.websockets import WebSocketDisconnect
 
 from src.renderer import ResumeRenderer, ResumeTemplate
 from src.service import ResumeService
@@ -10,6 +12,8 @@ app = FastAPI()
 
 ENV_KEY_RESUME_SOURCE_FILE = "RESUME_SOURCE_FILE"
 ENV_KEY_RESUME_TEMPLATE_NAME = "RESUME_TEMPLATE"
+
+PING_MESSAGE = "ping"
 
 html = """
 <!DOCTYPE html>
@@ -24,6 +28,11 @@ html = """
                 ws = new WebSocket(`ws://${location.host}/ws`);
 
                 ws.onmessage = function(event) {
+                    if (event.data === 'ping') {
+                        console.log('Received ping, sending pong');
+                        ws.send('pong');
+                        return;
+                    }
                     document.body.innerHTML = event.data;
                 };
 
@@ -49,7 +58,6 @@ html = """
 
 
 def get_resume_service() -> ResumeService:
-    """Dependency for providing a ResumeService instance."""
     return ResumeService(renderer=ResumeRenderer())
 
 
@@ -64,16 +72,26 @@ async def live_resume_preview_endpoint(
     service: ResumeService = Depends(get_resume_service),
 ) -> None:
     await websocket.accept()
-    while True:  # TODO: This can be simplified
 
-        async def send_update(content: str) -> None:
-            await websocket.send_text(content)
+    async def send_update(content: str) -> None:
+        await websocket.send_text(content)
 
-        await service.watch_file(
+    preview_showing_task = asyncio.create_task(
+        service.show_previews(
             file_path=get_env_or_error(ENV_KEY_RESUME_SOURCE_FILE),
             on_preview_updated=send_update,
             template=ResumeTemplate(get_env_or_error(ENV_KEY_RESUME_TEMPLATE_NAME)),
         )
+    )
+
+    try:
+        while True:
+            await websocket.send_text(PING_MESSAGE)
+            await websocket.receive_text()
+            await asyncio.sleep(1)
+    except WebSocketDisconnect:
+        preview_showing_task.cancel()
+        return
 
 
 def get_env_or_error(env_key: str) -> str:

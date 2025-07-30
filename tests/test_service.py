@@ -135,7 +135,7 @@ class TestResumeService:
             os.unlink(pdf_file_path)
 
     @pytest.mark.asyncio
-    async def test_watch_file(self, resume_service, mock_renderer):
+    async def test_show_previews(self, resume_service, mock_renderer):
         initial_data = {"v": 1}
         first_change_data = {"v": 2}
         second_change_data = {"v": 3}
@@ -152,7 +152,7 @@ class TestResumeService:
             )
 
             with patch("src.service.awatch", file_change_simulator.fake_awatch):
-                await resume_service.watch_file(
+                await resume_service.show_previews(
                     file_path=yaml_file.name,
                     on_preview_updated=preview_recorder.on_preview_updated,
                     template=ResumeTemplate.MINIMAL_BLUE,
@@ -176,7 +176,7 @@ class TestResumeService:
         fake_path = "/a/file/that/is/not/there.yaml"
 
         with patch("src.service.awatch", file_change_simulator.fake_awatch):
-            await resume_service.watch_file(
+            await resume_service.show_previews(
                 file_path=fake_path,
                 on_preview_updated=preview_recorder.on_preview_updated,
                 template=ResumeTemplate.MINIMAL_BLUE,
@@ -203,7 +203,7 @@ class TestResumeService:
 
             preview_recorder = PreviewRecorder()
             with patch("src.service.awatch", file_change_simulator.fake_awatch):
-                await resume_service.watch_file(
+                await resume_service.show_previews(
                     file_path=yaml_file.name,
                     on_preview_updated=preview_recorder.on_preview_updated,
                     template=ResumeTemplate.MINIMAL_BLUE,

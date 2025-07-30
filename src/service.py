@@ -25,7 +25,7 @@ class ResumeService:
 
         await self._update_preview(cv_data_path, write_to_pdf_file, template)
 
-    async def watch_file(
+    async def show_previews(
         self,
         file_path: str,
         on_preview_updated: PreviewUpdatedCallback,

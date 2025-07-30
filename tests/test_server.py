@@ -1,4 +1,3 @@
-import asyncio
 import os
 from contextlib import contextmanager
 from typing import Any, Awaitable, Callable
@@ -6,9 +5,17 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
+from starlette.testclient import WebSocketTestSession
 
 from src.renderer import ResumeTemplate
-from src.server import ENV_KEY_RESUME_SOURCE_FILE, ENV_KEY_RESUME_TEMPLATE_NAME, app, get_resume_service, html
+from src.server import (
+    ENV_KEY_RESUME_SOURCE_FILE,
+    ENV_KEY_RESUME_TEMPLATE_NAME,
+    PING_MESSAGE,
+    app,
+    get_resume_service,
+    html,
+)
 from src.service import ResumeService
 
 
@@ -33,28 +40,48 @@ def inject_mock_service(mock_service: ResumeService) -> Any:
 
 
 @pytest.mark.asyncio
-async def test_websocket_message_passing(mock_resume_service: ResumeService) -> None:
+async def test_sending_previews_on_websocket(mock_resume_service: ResumeService) -> None:
     test_message = "<html><body>Test message from mock service</body></html>"
     test_file_path = "some/file.yaml"
 
-    async def fake_watch_file(on_preview_updated: Callable[[str], Awaitable[None]], *args, **kwargs) -> None:
+    async def fake_show_previews(on_preview_updated: Callable[[str], Awaitable[None]], *args, **kwargs) -> None:
         await on_preview_updated(test_message)
-        await asyncio.sleep(1)
+        await on_preview_updated(test_message)
         return
 
-    mock_resume_service.watch_file.side_effect = fake_watch_file
+    mock_resume_service.show_previews.side_effect = fake_show_previews
 
     with inject_mock_service(mock_resume_service):
         os.environ[ENV_KEY_RESUME_SOURCE_FILE] = test_file_path
         os.environ[ENV_KEY_RESUME_TEMPLATE_NAME] = ResumeTemplate.MINIMAL_BLUE.value
 
-        with patch.dict(os.environ, {"RESUME_SOURCE_FILE": test_file_path}):
-            with TestClient(app).websocket_connect("/ws") as websocket:
-                received_message = websocket.receive_text()
+        with TestClient(app).websocket_connect("/ws") as ws:
+            for _ in range(2):
+                received_message = listen_ignoring_pings(ws)
                 assert received_message == test_message
-                websocket.close()
+            ws.close()
 
-    mock_resume_service.watch_file.assert_called_once()
+    mock_resume_service.show_previews.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_sending_ping_messages(mock_resume_service: ResumeService) -> None:
+    test_file_path = "some/file.yaml"
+
+    async def fake_show_previews(*args, **kwargs) -> None:
+        pass
+
+    mock_resume_service.show_previews.side_effect = fake_show_previews
+
+    with inject_mock_service(mock_resume_service):
+        os.environ[ENV_KEY_RESUME_SOURCE_FILE] = test_file_path
+        os.environ[ENV_KEY_RESUME_TEMPLATE_NAME] = ResumeTemplate.MINIMAL_BLUE.value
+
+        with TestClient(app).websocket_connect("/ws") as ws:
+            for _ in range(2):
+                assert ws.receive_text() == PING_MESSAGE
+                ws.send_text("pong")
+            ws.close()
 
 
 @pytest.mark.asyncio
@@ -80,3 +107,12 @@ async def test_get_endpoint_returns_html() -> None:
         assert response.status_code == 200
         assert response.headers["content-type"] == "text/html; charset=utf-8"
         assert response.text == html
+
+
+def listen_ignoring_pings(ws: WebSocketTestSession) -> str:
+    while True:
+        message = ws.receive_text()
+        if message == "ping":
+            ws.send_text("pong")
+            continue
+        return message
