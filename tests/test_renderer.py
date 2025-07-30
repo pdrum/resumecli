@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, cast
 
 import pytest
-import yaml  # type: ignore[import]
+import yaml
 from bs4 import BeautifulSoup, Tag
 
 from src.renderer import ResumeRenderer, ResumeTemplate
@@ -97,7 +97,7 @@ class TestRenderer:
     def renderer(self) -> ResumeRenderer:
         return ResumeRenderer()
 
-    @pytest.mark.parametrize("template", [ResumeTemplate.DEFAULT])
+    @pytest.mark.parametrize("template", list(ResumeTemplate))
     def test_position_rendering(self, renderer: ResumeRenderer, template: ResumeTemplate) -> None:
         cv_data = load_sample_cv()
 
@@ -113,7 +113,7 @@ class TestRenderer:
         soup = BeautifulSoup(rendered_html, "html.parser")
         assert_each_list_belong_to_distinct_section(soup, *expected_string_list_for_each_position)
 
-    @pytest.mark.parametrize("template", [ResumeTemplate.DEFAULT])
+    @pytest.mark.parametrize("template", list(ResumeTemplate))
     def test_experience_rendering(self, renderer: ResumeRenderer, template: ResumeTemplate) -> None:
         cv_data = load_sample_cv()
         experiences = cv_data.get("experience", [])
@@ -126,7 +126,7 @@ class TestRenderer:
         soup = BeautifulSoup(rendered_html, "html.parser")
         assert_each_list_belong_to_distinct_section(soup, *expected_string_list_for_each_experience)
 
-    @pytest.mark.parametrize("template", [ResumeTemplate.DEFAULT])
+    @pytest.mark.parametrize("template", list(ResumeTemplate))
     def test_education_rendering(self, renderer: ResumeRenderer, template: ResumeTemplate) -> None:
         cv_data = load_sample_cv()
         educations = cv_data["education"]
@@ -139,7 +139,7 @@ class TestRenderer:
         soup = BeautifulSoup(rendered_html, "html.parser")
         assert_each_list_belong_to_distinct_section(soup, *expected_string_list_for_each_education)
 
-    @pytest.mark.parametrize("template", [ResumeTemplate.DEFAULT])
+    @pytest.mark.parametrize("template", list(ResumeTemplate))
     def test_language_rendering(self, renderer: ResumeRenderer, template: ResumeTemplate) -> None:
         cv_data = load_sample_cv()
         languages = cv_data["languages"]
@@ -151,7 +151,7 @@ class TestRenderer:
 
         assert_each_list_belong_to_distinct_section(soup, *expected_string_list_for_each_language)
 
-    @pytest.mark.parametrize("template", [ResumeTemplate.DEFAULT])
+    @pytest.mark.parametrize("template", list(ResumeTemplate))
     def test_contact_rendering(self, renderer: ResumeRenderer, template: ResumeTemplate) -> None:
         cv_data = load_sample_cv()
         contact = cv_data["contact"]

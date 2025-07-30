@@ -1,35 +1,24 @@
 import asyncio
 import os
-from enum import Enum
 
 import typer
 import uvicorn
 
 from src.renderer import ResumeRenderer, ResumeTemplate
-from src.server import ENV_KEY_RESUME_SOURCE_FILE
+from src.server import ENV_KEY_RESUME_SOURCE_FILE, ENV_KEY_RESUME_TEMPLATE_NAME
 from src.service import ResumeService
 
 app = typer.Typer()
 
 
-class TemplateName(str, Enum):
-    MINIMAL_BLUE = "minimal_blue"
-    MINIMAL_GREEN = "minimal_green"
-
-    def to_template(self) -> ResumeTemplate:
-        return {
-            TemplateName.MINIMAL_BLUE: ResumeTemplate.MINIMAL_BLUE,
-            TemplateName.MINIMAL_GREEN: ResumeTemplate.MINIMAL_GREEN,
-        }[self]
-
-
 @app.command()
 def preview(
     file: str = typer.Argument(..., help="Path to the source YAML file for the resume"),
-    template: TemplateName = typer.Option(TemplateName.MINIMAL_BLUE, help="Template to use for the resume"),
+    template: ResumeTemplate = typer.Option(ResumeTemplate.MINIMAL_BLUE.value, help="Template to use for the resume"),
 ) -> None:
     typer.echo(f"Previewing {file}...")
     os.environ[ENV_KEY_RESUME_SOURCE_FILE] = os.path.abspath(file)
+    os.environ[ENV_KEY_RESUME_TEMPLATE_NAME] = template.value
     uvicorn.run("src.server:app", host="127.0.0.1", port=8000, reload=True)
 
 

@@ -9,6 +9,7 @@ from src.service import ResumeService
 app = FastAPI()
 
 ENV_KEY_RESUME_SOURCE_FILE = "RESUME_SOURCE_FILE"
+ENV_KEY_RESUME_TEMPLATE_NAME = "RESUME_TEMPLATE"
 
 html = """
 <!DOCTYPE html>
@@ -63,16 +64,20 @@ async def live_resume_preview_endpoint(
     service: ResumeService = Depends(get_resume_service),
 ) -> None:
     await websocket.accept()
-    while True:
-        file_path = os.environ.get(ENV_KEY_RESUME_SOURCE_FILE)
-        if not file_path:
-            raise ValueError(f"Environment variable '{ENV_KEY_RESUME_SOURCE_FILE}' is not set.")
+    while True:  # TODO: This can be simplified
 
         async def send_update(content: str) -> None:
             await websocket.send_text(content)
 
         await service.watch_file(
-            file_path=file_path,
+            file_path=get_env_or_error(ENV_KEY_RESUME_SOURCE_FILE),
             on_preview_updated=send_update,
-            template=ResumeTemplate.DEFAULT,
+            template=ResumeTemplate(get_env_or_error(ENV_KEY_RESUME_TEMPLATE_NAME)),
         )
+
+
+def get_env_or_error(env_key: str) -> str:
+    value = os.environ.get(env_key)
+    if not value:
+        raise KeyError(f"Environment variable '{env_key}' is not set.")
+    return value

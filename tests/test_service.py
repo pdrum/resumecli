@@ -61,10 +61,10 @@ class TestResumeService:
 
         try:
             await resume_service.generate_pdf(
-                cv_data_path=yaml_file_path, output_path=pdf_file_path, template=ResumeTemplate.DEFAULT
+                cv_data_path=yaml_file_path, output_path=pdf_file_path, template=ResumeTemplate.MINIMAL_BLUE
             )
 
-            mock_renderer.render_resume.assert_called_once_with(test_data, ResumeTemplate.DEFAULT)
+            mock_renderer.render_resume.assert_called_once_with(test_data, ResumeTemplate.MINIMAL_BLUE)
             mock_renderer.generate_pdf.assert_called_once_with(SAMPLE_RENDERED_RESUME)
 
             with open(pdf_file_path, "rb") as f:
@@ -85,7 +85,7 @@ class TestResumeService:
             await resume_service.generate_pdf(
                 cv_data_path=non_existent_file,
                 output_path=pdf_file_path,
-                template=ResumeTemplate.DEFAULT,
+                template=ResumeTemplate.MINIMAL_BLUE,
             )
 
             mock_renderer.render_error.assert_called_with(f"Could not open file: {non_existent_file}")
@@ -118,10 +118,10 @@ class TestResumeService:
             await resume_service.generate_pdf(
                 cv_data_path=yaml_file_path,
                 output_path=pdf_file_path,
-                template=ResumeTemplate.DEFAULT,
+                template=ResumeTemplate.MINIMAL_BLUE,
             )
 
-            mock_renderer.render_resume.assert_called_once_with(invalid_data, ResumeTemplate.DEFAULT)
+            mock_renderer.render_resume.assert_called_once_with(invalid_data, ResumeTemplate.MINIMAL_BLUE)
             mock_renderer.render_error.assert_called_once_with(
                 f"Failed to validate resume data: {library_error_message}",
             )
@@ -155,16 +155,16 @@ class TestResumeService:
                 await resume_service.watch_file(
                     file_path=yaml_file.name,
                     on_preview_updated=preview_recorder.on_preview_updated,
-                    template=ResumeTemplate.DEFAULT,
+                    template=ResumeTemplate.MINIMAL_BLUE,
                 )
 
             assert preview_recorder.previews == [SAMPLE_RENDERED_RESUME] * 3, "The preview should be updated 3 times."
 
             mock_renderer.render_resume.assert_has_calls(
                 [
-                    call(initial_data, ResumeTemplate.DEFAULT),
-                    call(first_change_data, ResumeTemplate.DEFAULT),
-                    call(second_change_data, ResumeTemplate.DEFAULT),
+                    call(initial_data, ResumeTemplate.MINIMAL_BLUE),
+                    call(first_change_data, ResumeTemplate.MINIMAL_BLUE),
+                    call(second_change_data, ResumeTemplate.MINIMAL_BLUE),
                 ]
             )
 
@@ -179,7 +179,7 @@ class TestResumeService:
             await resume_service.watch_file(
                 file_path=fake_path,
                 on_preview_updated=preview_recorder.on_preview_updated,
-                template=ResumeTemplate.DEFAULT,
+                template=ResumeTemplate.MINIMAL_BLUE,
             )
 
         assert preview_recorder.previews == [SAMPLE_RENDERED_ERROR], "The rendered error page should be sent out."
@@ -206,11 +206,11 @@ class TestResumeService:
                 await resume_service.watch_file(
                     file_path=yaml_file.name,
                     on_preview_updated=preview_recorder.on_preview_updated,
-                    template=ResumeTemplate.DEFAULT,
+                    template=ResumeTemplate.MINIMAL_BLUE,
                 )
 
             assert preview_recorder.previews == [SAMPLE_RENDERED_ERROR], "The rendered error page should be sent out."
-            mock_renderer.render_resume.assert_called_once_with(test_data, ResumeTemplate.DEFAULT)
+            mock_renderer.render_resume.assert_called_once_with(test_data, ResumeTemplate.MINIMAL_BLUE)
             mock_renderer.render_error.assert_called_once_with(
                 f"Failed to validate resume data: {library_error_message}",
             )

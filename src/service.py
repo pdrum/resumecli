@@ -17,7 +17,7 @@ class ResumeService:
         self,
         cv_data_path: str,
         output_path: str,
-        template: ResumeTemplate = ResumeTemplate.DEFAULT,
+        template: ResumeTemplate,
     ) -> None:
         async def write_to_pdf_file(preview_content: str) -> None:
             with open(output_path, "wb") as f:
@@ -29,7 +29,7 @@ class ResumeService:
         self,
         file_path: str,
         on_preview_updated: PreviewUpdatedCallback,
-        template: ResumeTemplate = ResumeTemplate.DEFAULT,
+        template: ResumeTemplate,
     ) -> None:
         await self._update_preview(file_path, on_preview_updated, template)
         async for _ in awatch(file_path):

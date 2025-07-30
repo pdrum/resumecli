@@ -12,9 +12,11 @@ from weasyprint import HTML
 
 
 class ResumeTemplate(Enum):
-    DEFAULT = "minimal_blue.html"
-    MINIMAL_BLUE = "minimal_blue.html"
-    MINIMAL_GREEN = "minimal_green.html"
+    MINIMAL_BLUE = "minimal_blue"
+    MINIMAL_GREEN = "minimal_green"
+
+    def template_path(self) -> str:
+        return f"{self.value}.html"
 
 
 class ResumeDataValidationError(Exception):
@@ -35,7 +37,7 @@ class ResumeRenderer:
 
     def render_resume(self, resume_data: Dict[str, Any], resume_template: ResumeTemplate) -> str:
         self._validate_resume_data(resume_data)
-        resolved_template = self.env.get_template(resume_template.value)
+        resolved_template = self.env.get_template(resume_template.template_path())
         resume_data_with_processed_markdown = self._markdown_to_html_for_dict(resume_data)
         return resolved_template.render(**resume_data_with_processed_markdown)
 
