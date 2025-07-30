@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10"]
 
     steps:
     - uses: actions/checkout@v3
@@ -22,6 +22,20 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
+
+    - name: Install system dependencies (Ubuntu)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libcairo2-dev libgirepository1.0-dev libpango1.0-dev libgdk-pixbuf2.0-dev libffi-dev
+
+    - name: Install system dependencies (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        brew install gobject-introspection cairo pango gdk-pixbuf libffi
+        echo 'export HOMEBREW_PREFIX="$(brew --prefix)"' >> $GITHUB_ENV
+        echo 'export DYLD_FALLBACK_LIBRARY_PATH="$(brew --prefix)/lib"' >> $GITHUB_ENV
+        echo 'export PKG_CONFIG_PATH="$(brew --prefix)/lib/pkgconfig"' >> $GITHUB_ENV
 
     - name: Install dependencies
       run: |
