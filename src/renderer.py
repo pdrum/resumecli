@@ -1,7 +1,6 @@
 import json
 from enum import Enum
 from functools import cached_property
-from pathlib import Path
 from typing import Any, Dict, cast
 
 import jsonschema
@@ -9,6 +8,8 @@ import markdown
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from markupsafe import Markup
 from weasyprint import HTML
+
+from src.constants import PROJECT_ROOT
 
 
 class ResumeTemplate(Enum):
@@ -25,7 +26,6 @@ class ResumeDataValidationError(Exception):
 
 
 class ResumeRenderer:
-    PROJECT_ROOT = Path(__file__).resolve().parent.parent
     _template_dir = PROJECT_ROOT / "templates"
     _schema_path = PROJECT_ROOT / "cv.schema.json"
 

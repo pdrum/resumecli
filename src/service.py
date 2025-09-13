@@ -1,12 +1,24 @@
+import shutil
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Awaitable, Callable
 
 import yaml
 from typing_extensions import TypeAlias
 from watchfiles import awatch
 
+from src.constants import PROJECT_ROOT
 from src.renderer import ResumeDataValidationError, ResumeRenderer, ResumeTemplate
 
 PreviewUpdatedCallback: TypeAlias = Callable[[str], Awaitable[None]]
+
+
+@dataclass
+class NewResumeResult:
+    """Results from creating a new resume."""
+
+    resume_path: Path
+    schema_path: Path
 
 
 class ResumeService:
@@ -34,6 +46,21 @@ class ResumeService:
         await self._update_preview(file_path, on_preview_updated, template)
         async for _ in awatch(file_path):
             await self._update_preview(file_path, on_preview_updated, template)
+
+    @staticmethod
+    def create_new_resume(output_path: str) -> NewResumeResult:
+        output_path = Path(output_path)
+        output_dir = output_path.parent
+
+        sample_path = PROJECT_ROOT / "cv.sample.yaml"
+        schema_path = PROJECT_ROOT / "cv.schema.json"
+
+        schema_dest = output_dir / "cv.schema.json"
+
+        shutil.copy(sample_path, output_path)
+        shutil.copy(schema_path, schema_dest)
+
+        return NewResumeResult(resume_path=output_path, schema_path=schema_dest)
 
     async def _update_preview(
         self,

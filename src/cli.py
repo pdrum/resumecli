@@ -27,20 +27,23 @@ def preview(
 def build(
     file: str = typer.Argument(..., help="Path to the source YAML file for the resume"),
     output: str = typer.Option("output.pdf", help="Output PDF file path"),
+    template: ResumeTemplate = typer.Option(ResumeTemplate.MINIMAL_BLUE.value, help="Template to use for the resume"),
 ) -> None:
     typer.echo(f"Building resume from {file}...")
 
     async def build_resume():
         service = ResumeService(renderer=ResumeRenderer())
-        await service.generate_pdf(cv_data_path=file, output_path=output)
+        await service.generate_pdf(cv_data_path=file, output_path=output, template=template)
 
     asyncio.run(build_resume())
 
 
 @app.command()
-def new() -> None:
-    """Create a new resume or project."""
-    typer.echo("Creating new...")
+def new(file: str = typer.Argument(..., help="Path where the new resume YAML file will be created")) -> None:
+    typer.echo("Creating new resume template...")
+    result = ResumeService.create_new_resume(file)
+    typer.echo(f"Created new resume template at {result.resume_path}")
+    typer.echo(f"Schema file copied to {result.schema_path}")
 
 
 if __name__ == "__main__":

@@ -1,13 +1,15 @@
 import os
 import tempfile
+from pathlib import Path
 from unittest.mock import MagicMock, call, patch
 
 import jsonschema.exceptions
 import pytest
 import yaml
 
+from src.constants import PROJECT_ROOT
 from src.renderer import ResumeDataValidationError, ResumeRenderer, ResumeTemplate
-from src.service import ResumeService
+from src.service import NewResumeResult, ResumeService
 
 SAMPLE_RENDERED_RESUME = "<html>Rendered Resume</html>"
 SAMPLE_RENDERED_ERROR = "<html>Error Page</html>"
@@ -214,3 +216,33 @@ class TestResumeService:
             mock_renderer.render_error.assert_called_once_with(
                 f"Failed to validate resume data: {library_error_message}",
             )
+
+    def test_create_new_resume(self, resume_service):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_dir_path = Path(temp_dir)
+            output_path = temp_dir_path / "my_resume.yaml"
+
+            result = ResumeService.create_new_resume(str(output_path))
+
+            assert isinstance(result, NewResumeResult)
+            assert result.resume_path == output_path
+            assert result.schema_path == temp_dir_path / "cv.schema.json"
+
+            assert output_path.exists()
+            assert (temp_dir_path / "cv.schema.json").exists()
+
+            self._assert_files_equal(PROJECT_ROOT / "cv.sample.yaml", output_path)
+            self._assert_files_equal(PROJECT_ROOT / "cv.schema.json", temp_dir_path / "cv.schema.json")
+
+    def test_create_new_resume_with_existing_directory(self, resume_service):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_dir_path = Path(temp_dir)
+            output_path = temp_dir_path / "my_resume.yaml"
+
+            temp_dir_path.mkdir(exist_ok=True)
+
+            ResumeService.create_new_resume(str(output_path))
+
+    def _assert_files_equal(self, path1: Path, path2: Path):
+        with open(path1, "r") as f1, open(path2, "r") as f2:
+            assert f1.read() == f2.read()
