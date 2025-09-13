@@ -186,8 +186,8 @@ jobs:
           DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
           # Run the application
-          if [ -f "$DIR/dist/resumecli/resumecli.command" ]; then
-              "$DIR/dist/resumecli/resumecli.command" "$@"
+          if [ -f "$DIR/resumecli/resumecli.command" ]; then
+              "$DIR/resumecli/resumecli.command" "$@"
           else
               echo "Error: resumecli executable not found"
               exit 1
@@ -236,8 +236,8 @@ jobs:
           DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
           # Run the application
-          if [ -f "$DIR/dist/resumecli/resumecli.sh" ]; then
-              "$DIR/dist/resumecli/resumecli.sh" "$@"
+          if [ -f "$DIR/resumecli/resumecli.sh" ]; then
+              "$DIR/resumecli/resumecli.sh" "$@"
           else
               echo "Error: resumecli executable not found"
               exit 1
