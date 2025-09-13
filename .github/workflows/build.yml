@@ -54,14 +54,15 @@ jobs:
             libpixman-1-dev \
             libfontconfig-dev
 
-          # Set environment variables for build on Linux
+          # Set Linux environment variables
           echo "GI_TYPELIB_PATH=/usr/lib/x86_64-linux-gnu/girepository-1.0" >> $GITHUB_ENV
 
       - name: Install dependencies (macOS)
         if: startsWith(matrix.platform, 'macos')
         run: |
           brew install gobject-introspection cairo pango gdk-pixbuf libffi
-          # Set environment variables needed for the build
+
+          # Set macOS environment variables
           echo "HOMEBREW_PREFIX=$(brew --prefix)" >> $GITHUB_ENV
           echo "DYLD_FALLBACK_LIBRARY_PATH=$(brew --prefix)/lib" >> $GITHUB_ENV
           echo "PKG_CONFIG_PATH=$(brew --prefix)/lib/pkgconfig" >> $GITHUB_ENV
@@ -73,176 +74,125 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller
 
-      - name: Update PyInstaller Spec for Linux
-        if: matrix.platform == 'linux'
-        run: |
-          # Add Linux-specific library paths to the .spec file
-          cat > update_spec.py << 'EOF'
-          import re
-
-          with open('resumecli.spec', 'r') as f:
-              content = f.read()
-
-          # Add Linux libraries section after the macOS section
-          linux_libs = '''
-          elif sys.platform == 'linux':  # Linux
-              # Libraries that need to be included for Linux
-              lib_path = '/usr/lib/x86_64-linux-gnu'
-
-              # Libraries that need to be included
-              lib_patterns = [
-                  'libgobject-2.0.so*',
-                  'libglib-2.0.so*',
-                  'libcairo.so*',
-                  'libpango*.so*',
-                  'libharfbuzz.so*',
-                  'libfontconfig.so*',
-                  'libfreetype.so*',
-                  'libpixman*.so*',
-                  'libffi.so*',
-                  'libgdk_pixbuf-2.0.so*',
-                  'libgio-2.0.so*',
-                  'libgmodule-2.0.so*',
-                  'libgthread-2.0.so*',
-                  'libintl.so*',
-              ]
-
-              # Add all matching libraries
-              for pattern in lib_patterns:
-                  for lib_file in glob.glob(os.path.join(lib_path, pattern)):
-                      if os.path.exists(lib_file):
-                          binaries.append((lib_file, '.'))
-
-              # Include GI typelib files
-              typelib_path = '/usr/lib/x86_64-linux-gnu/girepository-1.0'
-              if os.path.exists(typelib_path):
-                  for typelib in glob.glob(os.path.join(typelib_path, '*.typelib')):
-                      binaries.append((typelib, 'girepository-1.0'))
-          '''
-
-          # Find the end of the macOS if-block
-          macos_block_end = content.find('a = Analysis(')
-          if macos_block_end != -1:
-              # Insert the Linux section just before the Analysis section
-              insert_pos = content.rfind('\n', 0, macos_block_end)
-              if insert_pos != -1:
-                  content = content[:insert_pos] + linux_libs + content[insert_pos:]
-
-          with open('resumecli.spec', 'w') as f:
-              f.write(content)
-          EOF
-
-          python update_spec.py
-
       - name: Build Application
         run: |
-          # Clean previous build if it exists
-          echo "Cleaning previous build..."
+          # Clean and build with PyInstaller
           rm -rf build dist
-
-          # Run PyInstaller with our spec file
-          echo "Building with PyInstaller..."
           pyinstaller resumecli.spec
 
-          # Copy the runtime wrapper to the distribution directory
-          echo "Setting up runtime environment..."
+          # Setup runtime environment
           cp runtime_wrapper.sh dist/resumecli/
           chmod +x dist/resumecli/runtime_wrapper.sh
 
-          # Create platform-specific launcher
+          # Create platform-specific launchers
           if [[ "$RUNNER_OS" == "macOS" ]]; then
-            echo "Creating macOS launcher..."
+            # Create macOS launcher in the distribution directory
             cat > dist/resumecli/resumecli.command << 'CMDEOF'
-          #!/bin/bash
-          # Launch resumecli with the correct environment
-          DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
-          "\$DIR/runtime_wrapper.sh" "\$@"
-          CMDEOF
+            #!/bin/bash
+            # Launch resumecli with the proper environment
+            DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+            "$DIR/runtime_wrapper.sh" "$@"
+            CMDEOF
             chmod +x dist/resumecli/resumecli.command
 
-            # For macOS, create a runnable script that sets up homebrew dependencies
+            # Create macOS launcher script
             cat > resumecli-${{ matrix.platform }}.sh << 'EOF'
-          #!/bin/bash
+            #!/bin/bash
+            # resumecli for macOS
 
-          # resumecli for macOS
+            # Check for homebrew
+            if ! command -v brew &> /dev/null; then
+                echo "Homebrew is not installed. Please install it from https://brew.sh"
+                exit 1
+            fi
 
-          # Check if homebrew is installed
-          if ! command -v brew &> /dev/null; then
-              echo "Homebrew is not installed. Please install it from https://brew.sh"
-              exit 1
-          fi
+            # Install dependencies
+            echo "Installing required dependencies..."
+            brew install gobject-introspection cairo pango gdk-pixbuf libffi
 
-          # Install required dependencies
-          echo "Installing required dependencies..."
-          brew install gobject-introspection cairo pango gdk-pixbuf libffi
+            # Set environment variables
+            export HOMEBREW_PREFIX="$(brew --prefix)"
+            export DYLD_FALLBACK_LIBRARY_PATH="$HOMEBREW_PREFIX/lib"
+            export PKG_CONFIG_PATH="$HOMEBREW_PREFIX/lib/pkgconfig"
+            export GI_TYPELIB_PATH="$HOMEBREW_PREFIX/lib/girepository-1.0"
 
-          # Set environment variables
-          export HOMEBREW_PREFIX="$(brew --prefix)"
-          export DYLD_FALLBACK_LIBRARY_PATH="$HOMEBREW_PREFIX/lib"
-          export PKG_CONFIG_PATH="$HOMEBREW_PREFIX/lib/pkgconfig"
-          export GI_TYPELIB_PATH="$HOMEBREW_PREFIX/lib/girepository-1.0"
+            # Get the script directory
+            DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-          # Get the script directory
-          DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+            # Find and execute the resumecli application
+            for EXECUTABLE_PATH in "$DIR/resumecli/resumecli.command" "$DIR/dist/resumecli/resumecli.command"; do
+                if [ -f "$EXECUTABLE_PATH" ]; then
+                    "$EXECUTABLE_PATH" "$@"
+                    exit 0
+                fi
+            done
 
-          # Run the application
-          if [ -f "$DIR/resumecli/resumecli.command" ]; then
-              "$DIR/resumecli/resumecli.command" "$@"
+            # Error if executable not found
+            echo "Error: resumecli executable not found"
+            echo "Searched in:"
+            echo "  - $DIR/resumecli/resumecli.command"
+            echo "  - $DIR/dist/resumecli/resumecli.command"
+            echo "Current directory structure:"
+            find "$DIR" -type f -name "resumecli*" 2>/dev/null || echo "No resumecli files found"
+            exit 1
+            EOF
           else
-              echo "Error: resumecli executable not found"
-              exit 1
-          fi
-          EOF
-          else
-            # For Linux
-            echo "Creating Linux launcher..."
+            # Create Linux launcher in the distribution directory
             cat > dist/resumecli/resumecli.sh << 'SHEOF'
-          #!/bin/bash
-          # Launch resumecli with the correct environment
-          DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
-          "\$DIR/runtime_wrapper.sh" "\$@"
-          SHEOF
+            #!/bin/bash
+            # Launch resumecli with the proper environment
+            DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+            "$DIR/runtime_wrapper.sh" "$@"
+            SHEOF
             chmod +x dist/resumecli/resumecli.sh
 
-            # For Linux, create a runnable script that installs dependencies
+            # Create Linux launcher script
             cat > resumecli-${{ matrix.platform }}.sh << 'EOF'
-          #!/bin/bash
+            #!/bin/bash
+            # resumecli for Linux
 
-          # resumecli for Linux
+            # Check for sudo
+            if ! command -v sudo &> /dev/null; then
+                echo "This script requires 'sudo' to install dependencies."
+                exit 1
+            fi
 
-          # Check if we have sudo access
-          if ! command -v sudo &> /dev/null; then
-              echo "This script requires 'sudo' to install dependencies."
-              exit 1
-          fi
+            # Install dependencies
+            echo "Installing required dependencies..."
+            sudo apt-get update
+            sudo apt-get install -y \
+              libgirepository1.0-dev \
+              gobject-introspection \
+              libcairo2-dev \
+              libpango1.0-dev \
+              libgdk-pixbuf2.0-dev \
+              libffi-dev \
+              shared-mime-info
 
-          # Install required dependencies
-          echo "Installing required dependencies..."
-          sudo apt-get update
-          sudo apt-get install -y \
-            libgirepository1.0-dev \
-            gobject-introspection \
-            libcairo2-dev \
-            libpango1.0-dev \
-            libgdk-pixbuf2.0-dev \
-            libffi-dev \
-            shared-mime-info
+            # Set environment variables
+            export GI_TYPELIB_PATH="/usr/lib/x86_64-linux-gnu/girepository-1.0"
+            export LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
 
-          # Set environment variables
-          export GI_TYPELIB_PATH="/usr/lib/x86_64-linux-gnu/girepository-1.0"
-          export LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
+            # Get the script directory
+            DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-          # Get the script directory
-          DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+            # Find and execute the resumecli application
+            for EXECUTABLE_PATH in "$DIR/resumecli/resumecli.sh" "$DIR/dist/resumecli/resumecli.sh"; do
+                if [ -f "$EXECUTABLE_PATH" ]; then
+                    "$EXECUTABLE_PATH" "$@"
+                    exit 0
+                fi
+            done
 
-          # Run the application
-          if [ -f "$DIR/resumecli/resumecli.sh" ]; then
-              "$DIR/resumecli/resumecli.sh" "$@"
-          else
-              echo "Error: resumecli executable not found"
-              exit 1
-          fi
-          EOF
+            # Error if executable not found
+            echo "Error: resumecli executable not found"
+            echo "Searched in:"
+            echo "  - $DIR/resumecli/resumecli.sh"
+            echo "  - $DIR/dist/resumecli/resumecli.sh"
+            echo "Current directory structure:"
+            find "$DIR" -type f -name "resumecli*" 2>/dev/null || echo "No resumecli files found"
+            exit 1
+            EOF
           fi
 
           chmod +x resumecli-${{ matrix.platform }}.sh
@@ -253,7 +203,7 @@ jobs:
           name: resumecli-${{ matrix.platform }}
           path: |
             resumecli-${{ matrix.platform }}.sh
-            dist/resumecli/
+            dist/
 
   release:
     name: Create Release
@@ -273,15 +223,35 @@ jobs:
         run: |
           mkdir -p release
 
-          # Make the scripts executable
-          chmod +x artifacts/resumecli-linux/resumecli-linux.sh
-          chmod +x artifacts/resumecli-macos-intel/resumecli-macos-intel.sh
-          chmod +x artifacts/resumecli-macos-arm64/resumecli-macos-arm64.sh
+          # Create self-contained archives for each platform
+          for PLATFORM in linux macos-intel macos-arm64; do
+            echo "Preparing $PLATFORM package..."
 
-          # Copy to release directory
-          cp artifacts/resumecli-linux/resumecli-linux.sh release/
-          cp artifacts/resumecli-macos-intel/resumecli-macos-intel.sh release/
-          cp artifacts/resumecli-macos-arm64/resumecli-macos-arm64.sh release/
+            # Prepare directory structure
+            mkdir -p temp/$PLATFORM
+            cp artifacts/resumecli-$PLATFORM/resumecli-$PLATFORM.sh temp/$PLATFORM/resumecli.sh
+            chmod +x temp/$PLATFORM/resumecli.sh
+            cp -r artifacts/resumecli-$PLATFORM/dist temp/$PLATFORM/
+
+            # Ensure all scripts are executable
+            if [ "$PLATFORM" == "linux" ]; then
+              find temp/$PLATFORM -type f -name "*.sh" -exec chmod +x {} \;
+              chmod +x temp/$PLATFORM/dist/resumecli/resumecli 2>/dev/null || true
+            else
+              find temp/$PLATFORM -type f -name "*.command" -exec chmod +x {} \;
+              find temp/$PLATFORM -type f -name "*.sh" -exec chmod +x {} \;
+              chmod +x temp/$PLATFORM/dist/resumecli/resumecli 2>/dev/null || true
+            fi
+
+            # Create platform-specific archive
+            cd temp/$PLATFORM
+            if [ "$PLATFORM" == "linux" ]; then
+              tar -czf ../../release/resumecli-$PLATFORM.tar.gz .
+            else
+              zip -r ../../release/resumecli-$PLATFORM.zip .
+            fi
+            cd ../../
+          done
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
@@ -291,8 +261,8 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            release/resumecli-linux.sh
-            release/resumecli-macos-intel.sh
-            release/resumecli-macos-arm64.sh
+            release/resumecli-linux.tar.gz
+            release/resumecli-macos-intel.zip
+            release/resumecli-macos-arm64.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

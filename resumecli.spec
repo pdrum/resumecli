@@ -83,6 +83,28 @@ if sys.platform == 'darwin':  # macOS
     if os.path.exists(typelib_path):
         for typelib in glob.glob(os.path.join(typelib_path, '*.typelib')):
             binaries.append((typelib, 'girepository-1.0'))
+elif sys.platform == 'linux':  # Linux
+    # Libraries from /usr/lib/x86_64-linux-gnu
+    lib_path = '/usr/lib/x86_64-linux-gnu'
+    lib_patterns = [
+        'libgobject-2.0.so*', 'libglib-2.0.so*', 'libcairo.so*',
+        'libpango*.so*', 'libharfbuzz.so*', 'libfontconfig.so*',
+        'libfreetype.so*', 'libpixman*.so*', 'libffi.so*',
+        'libgdk_pixbuf-2.0.so*', 'libgio-2.0.so*', 'libgmodule-2.0.so*',
+        'libgthread-2.0.so*', 'libintl.so*',
+    ]
+
+    # Add matching libraries
+    for pattern in lib_patterns:
+        for lib_file in glob.glob(os.path.join(lib_path, pattern)):
+            if os.path.exists(lib_file):
+                binaries.append((lib_file, '.'))
+
+    # Include GI typelib files
+    typelib_path = '/usr/lib/x86_64-linux-gnu/girepository-1.0'
+    if os.path.exists(typelib_path):
+        for typelib in glob.glob(os.path.join(typelib_path, '*.typelib')):
+            binaries.append((typelib, 'girepository-1.0'))
 
 a = Analysis(
     ['src/cli.py'],
