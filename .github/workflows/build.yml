@@ -86,116 +86,22 @@ jobs:
 
           # Create platform-specific launchers
           if [[ "$RUNNER_OS" == "macOS" ]]; then
-            # Create macOS launcher in the distribution directory
-            cat > dist/resumecli/resumecli.command << 'CMDEOF'
-            #!/bin/bash
-            # Launch resumecli with the proper environment
-            DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-            "$DIR/runtime_wrapper.sh" "$@"
-            CMDEOF
+            # Copy macOS launcher to the distribution directory
+            cp scripts/macos_launcher.command dist/resumecli/resumecli.command
             chmod +x dist/resumecli/resumecli.command
 
-            # Create macOS launcher script
-            cat > resumecli-${{ matrix.platform }}.sh << 'EOF'
-            #!/bin/bash
-            # resumecli for macOS
-
-            # Check for homebrew
-            if ! command -v brew &> /dev/null; then
-                echo "Homebrew is not installed. Please install it from https://brew.sh"
-                exit 1
-            fi
-
-            # Install dependencies
-            echo "Installing required dependencies..."
-            brew install gobject-introspection cairo pango gdk-pixbuf libffi
-
-            # Set environment variables
-            export HOMEBREW_PREFIX="$(brew --prefix)"
-            export DYLD_FALLBACK_LIBRARY_PATH="$HOMEBREW_PREFIX/lib"
-            export PKG_CONFIG_PATH="$HOMEBREW_PREFIX/lib/pkgconfig"
-            export GI_TYPELIB_PATH="$HOMEBREW_PREFIX/lib/girepository-1.0"
-
-            # Get the script directory
-            DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-            # Find and execute the resumecli application
-            for EXECUTABLE_PATH in "$DIR/resumecli/resumecli.command" "$DIR/dist/resumecli/resumecli.command"; do
-                if [ -f "$EXECUTABLE_PATH" ]; then
-                    "$EXECUTABLE_PATH" "$@"
-                    exit 0
-                fi
-            done
-
-            # Error if executable not found
-            echo "Error: resumecli executable not found"
-            echo "Searched in:"
-            echo "  - $DIR/resumecli/resumecli.command"
-            echo "  - $DIR/dist/resumecli/resumecli.command"
-            echo "Current directory structure:"
-            find "$DIR" -type f -name "resumecli*" 2>/dev/null || echo "No resumecli files found"
-            exit 1
-            EOF
+            # Copy macOS wrapper script with platform suffix
+            cp scripts/macos_wrapper.sh resumecli-${{ matrix.platform }}.sh
+            chmod +x resumecli-${{ matrix.platform }}.sh
           else
-            # Create Linux launcher in the distribution directory
-            cat > dist/resumecli/resumecli.sh << 'SHEOF'
-            #!/bin/bash
-            # Launch resumecli with the proper environment
-            DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-            "$DIR/runtime_wrapper.sh" "$@"
-            SHEOF
+            # Copy Linux launcher to the distribution directory
+            cp scripts/linux_launcher.sh dist/resumecli/resumecli.sh
             chmod +x dist/resumecli/resumecli.sh
 
-            # Create Linux launcher script
-            cat > resumecli-${{ matrix.platform }}.sh << 'EOF'
-            #!/bin/bash
-            # resumecli for Linux
-
-            # Check for sudo
-            if ! command -v sudo &> /dev/null; then
-                echo "This script requires 'sudo' to install dependencies."
-                exit 1
-            fi
-
-            # Install dependencies
-            echo "Installing required dependencies..."
-            sudo apt-get update
-            sudo apt-get install -y \
-              libgirepository1.0-dev \
-              gobject-introspection \
-              libcairo2-dev \
-              libpango1.0-dev \
-              libgdk-pixbuf2.0-dev \
-              libffi-dev \
-              shared-mime-info
-
-            # Set environment variables
-            export GI_TYPELIB_PATH="/usr/lib/x86_64-linux-gnu/girepository-1.0"
-            export LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
-
-            # Get the script directory
-            DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-            # Find and execute the resumecli application
-            for EXECUTABLE_PATH in "$DIR/resumecli/resumecli.sh" "$DIR/dist/resumecli/resumecli.sh"; do
-                if [ -f "$EXECUTABLE_PATH" ]; then
-                    "$EXECUTABLE_PATH" "$@"
-                    exit 0
-                fi
-            done
-
-            # Error if executable not found
-            echo "Error: resumecli executable not found"
-            echo "Searched in:"
-            echo "  - $DIR/resumecli/resumecli.sh"
-            echo "  - $DIR/dist/resumecli/resumecli.sh"
-            echo "Current directory structure:"
-            find "$DIR" -type f -name "resumecli*" 2>/dev/null || echo "No resumecli files found"
-            exit 1
-            EOF
+            # Copy Linux wrapper script with platform suffix
+            cp scripts/linux_wrapper.sh resumecli-${{ matrix.platform }}.sh
+            chmod +x resumecli-${{ matrix.platform }}.sh
           fi
-
-          chmod +x resumecli-${{ matrix.platform }}.sh
 
       - name: Upload Executable
         uses: actions/upload-artifact@v4
