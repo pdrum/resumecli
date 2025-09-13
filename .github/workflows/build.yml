@@ -1,0 +1,295 @@
+name: Build Application
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Tag for release (optional)'
+        required: false
+        default: ''
+
+jobs:
+  build:
+    name: Build for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, macos-14] # macos-14 is Apple Silicon
+        include:
+          - os: ubuntu-latest
+            platform: linux
+          - os: macos-latest
+            platform: macos-intel
+          - os: macos-14
+            platform: macos-arm64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install dependencies (Ubuntu)
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgirepository1.0-dev \
+            gobject-introspection \
+            libcairo2-dev \
+            libpango1.0-dev \
+            libgdk-pixbuf2.0-dev \
+            libffi-dev \
+            shared-mime-info \
+            libharfbuzz-dev \
+            libfreetype-dev \
+            libpixman-1-dev \
+            libfontconfig-dev
+
+          # Set environment variables for build on Linux
+          echo "GI_TYPELIB_PATH=/usr/lib/x86_64-linux-gnu/girepository-1.0" >> $GITHUB_ENV
+
+      - name: Install dependencies (macOS)
+        if: startsWith(matrix.platform, 'macos')
+        run: |
+          brew install gobject-introspection cairo pango gdk-pixbuf libffi
+          # Set environment variables needed for the build
+          echo "HOMEBREW_PREFIX=$(brew --prefix)" >> $GITHUB_ENV
+          echo "DYLD_FALLBACK_LIBRARY_PATH=$(brew --prefix)/lib" >> $GITHUB_ENV
+          echo "PKG_CONFIG_PATH=$(brew --prefix)/lib/pkgconfig" >> $GITHUB_ENV
+          echo "GI_TYPELIB_PATH=$(brew --prefix)/lib/girepository-1.0" >> $GITHUB_ENV
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Update PyInstaller Spec for Linux
+        if: matrix.platform == 'linux'
+        run: |
+          # Add Linux-specific library paths to the .spec file
+          cat > update_spec.py << 'EOF'
+          import re
+
+          with open('resumecli.spec', 'r') as f:
+              content = f.read()
+
+          # Add Linux libraries section after the macOS section
+          linux_libs = '''
+          elif sys.platform == 'linux':  # Linux
+              # Libraries that need to be included for Linux
+              lib_path = '/usr/lib/x86_64-linux-gnu'
+
+              # Libraries that need to be included
+              lib_patterns = [
+                  'libgobject-2.0.so*',
+                  'libglib-2.0.so*',
+                  'libcairo.so*',
+                  'libpango*.so*',
+                  'libharfbuzz.so*',
+                  'libfontconfig.so*',
+                  'libfreetype.so*',
+                  'libpixman*.so*',
+                  'libffi.so*',
+                  'libgdk_pixbuf-2.0.so*',
+                  'libgio-2.0.so*',
+                  'libgmodule-2.0.so*',
+                  'libgthread-2.0.so*',
+                  'libintl.so*',
+              ]
+
+              # Add all matching libraries
+              for pattern in lib_patterns:
+                  for lib_file in glob.glob(os.path.join(lib_path, pattern)):
+                      if os.path.exists(lib_file):
+                          binaries.append((lib_file, '.'))
+
+              # Include GI typelib files
+              typelib_path = '/usr/lib/x86_64-linux-gnu/girepository-1.0'
+              if os.path.exists(typelib_path):
+                  for typelib in glob.glob(os.path.join(typelib_path, '*.typelib')):
+                      binaries.append((typelib, 'girepository-1.0'))
+          '''
+
+          # Find the end of the macOS if-block
+          macos_block_end = content.find('a = Analysis(')
+          if macos_block_end != -1:
+              # Insert the Linux section just before the Analysis section
+              insert_pos = content.rfind('\n', 0, macos_block_end)
+              if insert_pos != -1:
+                  content = content[:insert_pos] + linux_libs + content[insert_pos:]
+
+          with open('resumecli.spec', 'w') as f:
+              f.write(content)
+          EOF
+
+          python update_spec.py
+
+      - name: Build Application
+        run: |
+          # Clean previous build if it exists
+          echo "Cleaning previous build..."
+          rm -rf build dist
+
+          # Run PyInstaller with our spec file
+          echo "Building with PyInstaller..."
+          pyinstaller resumecli.spec
+
+          # Copy the runtime wrapper to the distribution directory
+          echo "Setting up runtime environment..."
+          cp runtime_wrapper.sh dist/resumecli/
+          chmod +x dist/resumecli/runtime_wrapper.sh
+
+          # Create platform-specific launcher
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            echo "Creating macOS launcher..."
+            cat > dist/resumecli/resumecli.command << 'CMDEOF'
+          #!/bin/bash
+          # Launch resumecli with the correct environment
+          DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
+          "\$DIR/runtime_wrapper.sh" "\$@"
+          CMDEOF
+            chmod +x dist/resumecli/resumecli.command
+
+            # For macOS, create a runnable script that sets up homebrew dependencies
+            cat > resumecli-${{ matrix.platform }}.sh << 'EOF'
+          #!/bin/bash
+
+          # resumecli for macOS
+
+          # Check if homebrew is installed
+          if ! command -v brew &> /dev/null; then
+              echo "Homebrew is not installed. Please install it from https://brew.sh"
+              exit 1
+          fi
+
+          # Install required dependencies
+          echo "Installing required dependencies..."
+          brew install gobject-introspection cairo pango gdk-pixbuf libffi
+
+          # Set environment variables
+          export HOMEBREW_PREFIX="$(brew --prefix)"
+          export DYLD_FALLBACK_LIBRARY_PATH="$HOMEBREW_PREFIX/lib"
+          export PKG_CONFIG_PATH="$HOMEBREW_PREFIX/lib/pkgconfig"
+          export GI_TYPELIB_PATH="$HOMEBREW_PREFIX/lib/girepository-1.0"
+
+          # Get the script directory
+          DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+          # Run the application
+          if [ -f "$DIR/dist/resumecli/resumecli.command" ]; then
+              "$DIR/dist/resumecli/resumecli.command" "$@"
+          else
+              echo "Error: resumecli executable not found"
+              exit 1
+          fi
+          EOF
+          else
+            # For Linux
+            echo "Creating Linux launcher..."
+            cat > dist/resumecli/resumecli.sh << 'SHEOF'
+          #!/bin/bash
+          # Launch resumecli with the correct environment
+          DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
+          "\$DIR/runtime_wrapper.sh" "\$@"
+          SHEOF
+            chmod +x dist/resumecli/resumecli.sh
+
+            # For Linux, create a runnable script that installs dependencies
+            cat > resumecli-${{ matrix.platform }}.sh << 'EOF'
+          #!/bin/bash
+
+          # resumecli for Linux
+
+          # Check if we have sudo access
+          if ! command -v sudo &> /dev/null; then
+              echo "This script requires 'sudo' to install dependencies."
+              exit 1
+          fi
+
+          # Install required dependencies
+          echo "Installing required dependencies..."
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgirepository1.0-dev \
+            gobject-introspection \
+            libcairo2-dev \
+            libpango1.0-dev \
+            libgdk-pixbuf2.0-dev \
+            libffi-dev \
+            shared-mime-info
+
+          # Set environment variables
+          export GI_TYPELIB_PATH="/usr/lib/x86_64-linux-gnu/girepository-1.0"
+          export LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
+
+          # Get the script directory
+          DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+          # Run the application
+          if [ -f "$DIR/dist/resumecli/resumecli.sh" ]; then
+              "$DIR/dist/resumecli/resumecli.sh" "$@"
+          else
+              echo "Error: resumecli executable not found"
+              exit 1
+          fi
+          EOF
+          fi
+
+          chmod +x resumecli-${{ matrix.platform }}.sh
+
+      - name: Upload Executable
+        uses: actions/upload-artifact@v3
+        with:
+          name: resumecli-${{ matrix.platform }}
+          path: |
+            resumecli-${{ matrix.platform }}.sh
+            dist/resumecli/
+
+  release:
+    name: Create Release
+    needs: build
+    if: inputs.release_tag != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+
+      - name: Prepare Release Files
+        run: |
+          mkdir -p release
+
+          # Make the scripts executable
+          chmod +x artifacts/resumecli-linux/resumecli-linux.sh
+          chmod +x artifacts/resumecli-macos-intel/resumecli-macos-intel.sh
+          chmod +x artifacts/resumecli-macos-arm64/resumecli-macos-arm64.sh
+
+          # Copy to release directory
+          cp artifacts/resumecli-linux/resumecli-linux.sh release/
+          cp artifacts/resumecli-macos-intel/resumecli-macos-intel.sh release/
+          cp artifacts/resumecli-macos-arm64/resumecli-macos-arm64.sh release/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.event.inputs.release_tag }}
+          name: Release ${{ github.event.inputs.release_tag }}
+          draft: false
+          prerelease: false
+          files: |
+            release/resumecli-linux.sh
+            release/resumecli-macos-intel.sh
+            release/resumecli-macos-arm64.sh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
