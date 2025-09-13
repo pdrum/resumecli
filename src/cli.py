@@ -15,11 +15,12 @@ app = typer.Typer()
 def preview(
     file: str = typer.Argument(..., help="Path to the source YAML file for the resume"),
     template: ResumeTemplate = typer.Option(ResumeTemplate.MINIMAL_BLUE.value, help="Template to use for the resume"),
+    port: int = typer.Option(8000, help="Port to run the preview server on"),
 ) -> None:
-    typer.echo(f"Previewing {file}...")
+    typer.echo(f"Previewing {file} on port {port}...")
     os.environ[ENV_KEY_RESUME_SOURCE_FILE] = os.path.abspath(file)
     os.environ[ENV_KEY_RESUME_TEMPLATE_NAME] = template.value
-    uvicorn.run("src.server:app", host="127.0.0.1", port=8000, reload=False)
+    uvicorn.run("src.server:app", host="127.0.0.1", port=port, reload=False)
 
 
 @app.command()
