@@ -1,15 +1,15 @@
 $schema: ./cv.schema.json
-name: Jane Developer
+name: Jane Doe
 title: Full Stack Engineer
 about: Passionate software developer with expertise in web technologies and distributed systems. Committed to writing clean, maintainable code and building user-friendly applications.
 contact:
-  email: jane.dev@example.com
+  email: jane.doe@example.com
   phone: +1-555-987-6543
-  github: janedev
-  blog: https://janedev.medium.com
-  linkedin: https://www.linkedin.com/in/janedev
+  github: janedoe
+  blog: https://janedoe.medium.com
+  linkedin: https://www.linkedin.com/in/janedoe
   links:
-    - https://janedev.io/portfolio
+    - https://janedoe.io/portfolio
 experience:
   - company: Tech Innovations Ltd
     description: Fast-growing startup focused on AI-powered solutions
