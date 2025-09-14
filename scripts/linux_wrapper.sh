@@ -90,6 +90,8 @@ if [[ ":$PATH:" != *":$SYMLINK_DIR:"* ]]; then
     echo "Adding $SYMLINK_DIR to your PATH"
     echo 'export PATH="$SYMLINK_DIR:$PATH"' >> "$HOME/.bashrc"
     echo 'export PATH="$SYMLINK_DIR:$PATH"' >> "$HOME/.zshrc" 2>/dev/null || true
+    echo 'export PATH="$SYMLINK_DIR:$PATH"' >> "$HOME/.profile" 2>/dev/null || true
+    echo 'export PATH="$SYMLINK_DIR:$PATH"' >> "$HOME/.bash_profile" 2>/dev/null || true
 fi
 
 echo "✅ Installation successful!"
@@ -103,4 +105,13 @@ fi
 
 if [ -f "$HOME/.zshrc" ]; then
     echo "  source ~/.zshrc     # if you use zsh"
+fi
+
+# Provide instructions for login shells
+if [ -f "$HOME/.profile" ]; then
+    echo "  source ~/.profile  # for login/login shells"
+fi
+
+if [ -f "$HOME/.bash_profile" ]; then
+    echo "  source ~/.bash_profile  # for login shells"
 fi
