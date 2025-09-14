@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # resumecli installer for Linux
 
 # Check for package manager and install dependencies
@@ -50,8 +50,8 @@ echo "Installing resumecli to $INSTALL_DIR..."
 
 # Find and copy the binary
 for BINARY_PATH in "$DIR/resumecli/resumecli" "$DIR/dist/resumecli/resumecli" "$DIR/../build/resumecli/resumecli"; do
-    if [ -f "$BINARY_PATH" ]; then
-        echo "Found resumecli binary at $BINARY_PATH"
+    if [ -f "$BINARY_PATH" ] && file "$BINARY_PATH" | grep -q 'ELF'; then
+        echo "Found Linux resumecli binary at $BINARY_PATH"
 
         # Copy the entire directory to maintain all dependencies
         PARENT_DIR=$(dirname "$BINARY_PATH")
@@ -60,17 +60,17 @@ for BINARY_PATH in "$DIR/resumecli/resumecli" "$DIR/dist/resumecli/resumecli" "$
         # Make the binary executable
         chmod +x "$INSTALL_DIR/resumecli"
 
-        # Create a wrapper script in the installation directory (hardcoded install path)
+        # Create a wrapper script in the installation directory with expanded install path
         cat > "$INSTALL_DIR/resumecli_wrapper" << EOF
-#!/bin/bash
+#!/usr/bin/env bash
 # Wrapper script for resumecli (hardcoded install path)
 
 # Set environment variables
 export GI_TYPELIB_PATH="/usr/lib/x86_64-linux-gnu/girepository-1.0"
-export LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:\$LD_LIBRARY_PATH"
 
 # Run the resumecli binary from install dir
-"$INSTALL_DIR/resumecli" "\$@"
+exec "$INSTALL_DIR/resumecli" "\$@"
 EOF
 
         chmod +x "$INSTALL_DIR/resumecli_wrapper"
@@ -85,33 +85,15 @@ mkdir -p "$SYMLINK_DIR"
 ln -sf "$INSTALL_DIR/resumecli_wrapper" "$SYMLINK_DIR/resumecli"
 echo "Creating symlink in $SYMLINK_DIR..."
 
-# Ensure the directory is in PATH
+# Ensure the directory is in PATH across login and interactive shells
 if [[ ":$PATH:" != *":$SYMLINK_DIR:"* ]]; then
-    echo "Adding $SYMLINK_DIR to your PATH"
-    echo 'export PATH="$SYMLINK_DIR:$PATH"' >> "$HOME/.bashrc"
-    echo 'export PATH="$SYMLINK_DIR:$PATH"' >> "$HOME/.zshrc" 2>/dev/null || true
-    echo 'export PATH="$SYMLINK_DIR:$PATH"' >> "$HOME/.profile" 2>/dev/null || true
-    echo 'export PATH="$SYMLINK_DIR:$PATH"' >> "$HOME/.bash_profile" 2>/dev/null || true
+    echo "Adding $SYMLINK_DIR to your PATH in your shell config files"
+    for PROFILE in "$HOME/.bash_profile" "$HOME/.profile" "$HOME/.bashrc" "$HOME/.zshrc"; do
+        if [ -f "$PROFILE" ]; then
+            echo "export PATH=\"$SYMLINK_DIR:\$PATH\"" >> "$PROFILE"
+        fi
+    done
 fi
 
 echo "✅ Installation successful!"
-echo "You can now run 'resumecli' from anywhere in your terminal."
-
-# Source the profile to update PATH in current session
-if [ -f "$HOME/.bashrc" ]; then
-    echo "To use resumecli in your current terminal session, run:"
-    echo "  source ~/.bashrc"
-fi
-
-if [ -f "$HOME/.zshrc" ]; then
-    echo "  source ~/.zshrc     # if you use zsh"
-fi
-
-# Provide instructions for login shells
-if [ -f "$HOME/.profile" ]; then
-    echo "  source ~/.profile  # for login/login shells"
-fi
-
-if [ -f "$HOME/.bash_profile" ]; then
-    echo "  source ~/.bash_profile  # for login shells"
-fi
+echo "Open a new terminal session (or tab) to start using resumecli without additional steps."
