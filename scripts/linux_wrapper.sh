@@ -49,7 +49,6 @@ mkdir -p "$INSTALL_DIR"
 echo "Installing resumecli to $INSTALL_DIR..."
 
 # Find and copy the binary
-BINARY_FOUND=false
 for BINARY_PATH in "$DIR/resumecli/resumecli" "$DIR/dist/resumecli/resumecli" "$DIR/../build/resumecli/resumecli"; do
     if [ -f "$BINARY_PATH" ]; then
         echo "Found resumecli binary at $BINARY_PATH"
@@ -61,28 +60,24 @@ for BINARY_PATH in "$DIR/resumecli/resumecli" "$DIR/dist/resumecli/resumecli" "$
         # Make the binary executable
         chmod +x "$INSTALL_DIR/resumecli"
 
-        BINARY_FOUND=true
-        break
-    fi
-done
-
-# Create a wrapper script in the installation directory
-cat > "$INSTALL_DIR/resumecli_wrapper" << 'EOF'
+        # Create a wrapper script in the installation directory (hardcoded install path)
+        cat > "$INSTALL_DIR/resumecli_wrapper" << EOF
 #!/bin/bash
-# Wrapper script for resumecli
+# Wrapper script for resumecli (hardcoded install path)
 
 # Set environment variables
 export GI_TYPELIB_PATH="/usr/lib/x86_64-linux-gnu/girepository-1.0"
 export LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
 
-# Get the script directory (where this wrapper is installed)
-DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-# Run the resumecli binary
-"$DIR/resumecli" "$@"
+# Run the resumecli binary from install dir
+"$INSTALL_DIR/resumecli" "\$@"
 EOF
 
-chmod +x "$INSTALL_DIR/resumecli_wrapper"
+        chmod +x "$INSTALL_DIR/resumecli_wrapper"
+
+        break
+    fi
+done
 
 ### Symlink installation ###
 SYMLINK_DIR="$HOME/.local/bin"

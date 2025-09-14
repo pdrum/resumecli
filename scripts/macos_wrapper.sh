@@ -26,7 +26,6 @@ mkdir -p "$INSTALL_DIR"
 echo "Installing resumecli to $INSTALL_DIR..."
 
 # Find and copy the binary
-BINARY_FOUND=false
 for BINARY_PATH in "$DIR/resumecli/resumecli" "$DIR/dist/resumecli/resumecli" "$DIR/../build/resumecli/resumecli"; do
     if [ -f "$BINARY_PATH" ]; then
         echo "Found resumecli binary at $BINARY_PATH"
@@ -42,14 +41,10 @@ for BINARY_PATH in "$DIR/resumecli/resumecli" "$DIR/dist/resumecli/resumecli" "$
         echo "Removing macOS quarantine attribute from all files in installation directory..."
         xattr -dr com.apple.quarantine "$INSTALL_DIR"
 
-        break
-    fi
-done
-
-# Create a wrapper script in the installation directory
-cat > "$INSTALL_DIR/resumecli_wrapper" << 'EOF'
+        # Create a wrapper script in the installation directory that always calls the installed binary
+        cat > "$INSTALL_DIR/resumecli_wrapper" << EOF
 #!/bin/bash
-# Wrapper script for resumecli
+# Wrapper script for resumecli (hardcoded installation path)
 
 # Set environment variables
 export HOMEBREW_PREFIX="$(brew --prefix)"
@@ -57,14 +52,15 @@ export DYLD_FALLBACK_LIBRARY_PATH="$HOMEBREW_PREFIX/lib"
 export PKG_CONFIG_PATH="$HOMEBREW_PREFIX/lib/pkgconfig"
 export GI_TYPELIB_PATH="$HOMEBREW_PREFIX/lib/girepository-1.0"
 
-# Get the script directory (where this wrapper is installed)
-DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
 # Run the resumecli binary
-"$DIR/resumecli" "$@"
+"$INSTALL_DIR/resumecli" "\$@"
 EOF
 
-chmod +x "$INSTALL_DIR/resumecli_wrapper"
+        chmod +x "$INSTALL_DIR/resumecli_wrapper"
+
+        break
+    fi
+done
 
 ### Symlink installation ###
 # Install user-local command
