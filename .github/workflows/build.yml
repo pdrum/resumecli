@@ -13,17 +13,24 @@ permissions:
 
 jobs:
   build:
-    name: Build for ${{ matrix.os }}
+    name: Build for ${{ matrix.platform }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, macos-14] # macos-14 is Apple Silicon
         include:
+          # Linux x86_64 (Intel)
           - os: ubuntu-latest
-            platform: linux
+            platform: linux-intel
+            arch: x64
+          # Linux Arm64
+          - os: ubuntu-latest
+            platform: linux-arm64
+            arch: arm64
+          # macOS Intel
           - os: macos-latest
             platform: macos-intel
+          # macOS Arm64 (Apple Silicon)
           - os: macos-14
             platform: macos-arm64
 
@@ -38,7 +45,7 @@ jobs:
           cache: 'pip'
 
       - name: Install dependencies (Ubuntu)
-        if: matrix.platform == 'linux'
+        if: startsWith(matrix.platform, 'linux-')
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -52,7 +59,8 @@ jobs:
             libharfbuzz-dev \
             libfreetype-dev \
             libpixman-1-dev \
-            libfontconfig-dev
+            libfontconfig-dev \
+            binutils
 
           # Set Linux environment variables
           echo "GI_TYPELIB_PATH=/usr/lib/x86_64-linux-gnu/girepository-1.0" >> $GITHUB_ENV
@@ -73,12 +81,24 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pyinstaller
+      # Setup QEMU emulation for ARM64 cross-builds
+      - name: Setup QEMU
+        if: matrix.platform == 'linux-arm64'
+        uses: docker/setup-qemu-action@v2
+      - name: Setup Docker Buildx
+        if: matrix.platform == 'linux-arm64'
+        uses: docker/setup-buildx-action@v2
 
       - name: Build Application
         run: |
-          # Clean and build with PyInstaller
+          # Clean previous build artifacts
           rm -rf build dist
-          pyinstaller resumecli.spec
+          # Build with PyInstaller: use Docker for arm64, native for others
+          if [[ "${{ matrix.platform }}" == "linux-arm64" ]]; then
+            docker run --rm --platform linux/arm64 -v "$PWD":/work -w /work python:3.10-slim bash -c "apt-get update && apt-get install -y binutils && pip install -r requirements.txt && pip install pyinstaller && pyinstaller resumecli.spec && chown -R $(id -u):$(id -g) dist"
+          else
+            pyinstaller resumecli.spec
+          fi
 
           # Setup runtime environment
           cp runtime_wrapper.sh dist/resumecli/
@@ -120,27 +140,44 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download all artifacts
+      # Download each platform artifact into separate folders
+      - name: Download Linux Intel Artifact
         uses: actions/download-artifact@v4
         with:
-          path: artifacts
+          name: resumecli-linux-intel
+          path: artifacts/linux-intel
+      - name: Download Linux Arm64 Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: resumecli-linux-arm64
+          path: artifacts/linux-arm64
+      - name: Download macOS Intel Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: resumecli-macos-intel
+          path: artifacts/macos-intel
+      - name: Download macOS Arm64 Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: resumecli-macos-arm64
+          path: artifacts/macos-arm64
 
       - name: Prepare Release Files
         run: |
           mkdir -p release
 
           # Create self-contained archives for each platform
-          for PLATFORM in linux macos-intel macos-arm64; do
+          for PLATFORM in linux-intel linux-arm64 macos-intel macos-arm64; do
             echo "Preparing $PLATFORM package..."
 
             # Prepare directory structure
             mkdir -p temp/$PLATFORM
-            cp artifacts/resumecli-$PLATFORM/resumecli-$PLATFORM.sh temp/$PLATFORM/resumecli.sh
+            cp artifacts/$PLATFORM/resumecli-$PLATFORM.sh temp/$PLATFORM/resumecli.sh
             chmod +x temp/$PLATFORM/resumecli.sh
-            cp -r artifacts/resumecli-$PLATFORM/dist temp/$PLATFORM/
+            cp -r artifacts/$PLATFORM/dist temp/$PLATFORM/
 
             # Ensure all scripts are executable
-            if [ "$PLATFORM" == "linux" ]; then
+            if [[ "$PLATFORM" == linux-* ]]; then
               find temp/$PLATFORM -type f -name "*.sh" -exec chmod +x {} \;
               chmod +x temp/$PLATFORM/dist/resumecli/resumecli 2>/dev/null || true
             else
@@ -151,7 +188,7 @@ jobs:
 
             # Create platform-specific archive
             cd temp/$PLATFORM
-            if [ "$PLATFORM" == "linux" ]; then
+            if [[ "$PLATFORM" == linux-* ]]; then
               tar -czf ../../release/resumecli-$PLATFORM.tar.gz .
             else
               zip -r ../../release/resumecli-$PLATFORM.zip .
@@ -167,7 +204,8 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            release/resumecli-linux.tar.gz
+            release/resumecli-linux-intel.tar.gz
+            release/resumecli-linux-arm64.tar.gz
             release/resumecli-macos-intel.zip
             release/resumecli-macos-arm64.zip
         env:
