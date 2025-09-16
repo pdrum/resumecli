@@ -9,6 +9,7 @@ import markdown
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from markupsafe import Markup
 from weasyprint import HTML
+from weasyprint.text.fonts import FontConfiguration
 
 from src.constants import PROJECT_ROOT
 
@@ -47,7 +48,9 @@ class ResumeRenderer:
         return template.render(error_message=error_message, json_schema=self._schema)
 
     def generate_pdf(self, rendered_resume: str) -> bytes:
-        return cast(bytes, HTML(string=rendered_resume, base_url=os.getcwd()).write_pdf())
+        return cast(
+            bytes, HTML(string=rendered_resume, base_url=os.getcwd()).write_pdf(font_config=FontConfiguration())
+        )
 
     def _validate_resume_data(self, resume_data: Dict[str, Any]) -> None:
         try:
