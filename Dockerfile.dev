@@ -1,0 +1,34 @@
+# Dockerfile for local development of resumecli
+FROM python:3.10-slim
+
+# Install system dependencies for renderer and CLI
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libgirepository1.0-dev gobject-introspection libcairo2-dev libpango1.0-dev \
+    libgdk-pixbuf-xlib-2.0-dev libffi-dev shared-mime-info libharfbuzz-dev \
+    libfreetype-dev libpixman-1-dev libfontconfig-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Set environment for GObject GI typelibs and dynamic libraries
+ENV GI_TYPELIB_PATH="/usr/lib/x86_64-linux-gnu/girepository-1.0"
+ENV LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
+ENV PYTHONPATH="/app:$PYTHONPATH"
+
+# Copy only manifest files first to leverage cache
+COPY pyproject.toml setup.py requirements.txt ./
+# Upgrade pip
+RUN pip install --upgrade pip
+# Copy application source for editable install
+COPY . .
+# Install package in editable mode
+RUN pip install -e .
+# Ensure console scripts are found
+ENV PATH="/usr/local/bin:$PATH"
+
+# Expose port for preview
+EXPOSE 8000
+
+# Always open a bash shell for local development
+ENTRYPOINT ["/bin/bash"]

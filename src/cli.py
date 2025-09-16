@@ -20,7 +20,7 @@ def preview(
     typer.echo(f"Previewing {file} on port {port}...")
     os.environ[ENV_KEY_RESUME_SOURCE_FILE] = os.path.abspath(file)
     os.environ[ENV_KEY_RESUME_TEMPLATE_NAME] = template.value
-    uvicorn.run("src.server:app", host="127.0.0.1", port=port, reload=False)
+    uvicorn.run("src.server:app", host="0.0.0.0", port=port, reload=False)
 
 
 @app.command()
