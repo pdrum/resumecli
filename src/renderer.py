@@ -1,4 +1,5 @@
 import json
+import os
 from enum import Enum
 from functools import cached_property
 from typing import Any, Dict, cast
@@ -46,7 +47,7 @@ class ResumeRenderer:
         return template.render(error_message=error_message, json_schema=self._schema)
 
     def generate_pdf(self, rendered_resume: str) -> bytes:
-        return cast(bytes, HTML(string=rendered_resume).write_pdf())
+        return cast(bytes, HTML(string=rendered_resume, base_url=os.getcwd()).write_pdf())
 
     def _validate_resume_data(self, resume_data: Dict[str, Any]) -> None:
         try:
