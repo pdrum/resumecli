@@ -23,6 +23,9 @@ datas.extend(collect_data_files('jsonschema'))
 template_dir = os.path.join(script_dir, 'templates')
 datas.append((template_dir, 'templates'))
 
+# Include static assets (CSS, fonts)
+datas.append((os.path.join(script_dir, 'templates', 'static'), 'static'))
+
 # Collect sample resume and schema files
 datas.append((os.path.join(script_dir, 'cv.schema.json'), '.'))
 datas.append((os.path.join(script_dir, 'cv.sample.yaml'), '.'))

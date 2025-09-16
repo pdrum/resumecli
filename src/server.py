@@ -3,12 +3,16 @@ import os
 
 from fastapi import Depends, FastAPI, WebSocket
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.websockets import WebSocketDisconnect
 
+from src.constants import PROJECT_ROOT
 from src.renderer import ResumeRenderer, ResumeTemplate
 from src.service import ResumeService
 
 app = FastAPI()
+
+app.mount("/static", StaticFiles(directory=str(PROJECT_ROOT / "templates" / "static")), name="static")
 
 ENV_KEY_RESUME_SOURCE_FILE = "RESUME_SOURCE_FILE"
 ENV_KEY_RESUME_TEMPLATE_NAME = "RESUME_TEMPLATE"
